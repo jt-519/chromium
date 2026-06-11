@@ -3,315 +3,181 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chromium — 升核工具集</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Noto+Sans+SC:wght@300;400;500&display=swap" rel="stylesheet">
+  <meta name="theme-color" content="#f4f1ea" />
+  <title>Chromium — 升核测试工具集</title>
+  <link rel="stylesheet" href="assets/css/pages.css">
   <style>
-    :root {
-      --bg:           #05080e;
-      --surface:      #0b1422;
-      --surface-h:    #0f1c2e;
-      --border:       rgba(56, 189, 248, 0.1);
-      --border-h:     rgba(56, 189, 248, 0.35);
-      --sky:          #38bdf8;
-      --amber:        #fbbf24;
-      --emerald:      #34d399;
-      --text:         #e0eaff;
-      --text-dim:     #7a95b8;
-      --text-muted:   #3d5270;
-      --mono:         'Space Mono', monospace;
-      --sans:         'Noto Sans SC', sans-serif;
+    .phase-flow {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+      margin-bottom: 40px; padding-bottom: 32px; border-bottom: 1px solid var(--border);
     }
-
-    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-    html { scroll-behavior: smooth; }
-
-    body {
-      font-family: var(--sans);
-      font-weight: 300;
-      background-color: var(--bg);
-      color: var(--text);
-      line-height: 1.6;
-      overflow-x: hidden;
+    .phase-item {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 6px 14px;
+      background: var(--bg-card); border: 1px solid var(--border-strong);
+      border-radius: var(--radius);
+      font-family: var(--font-body); font-size: 13px; color: var(--text-secondary);
+      white-space: nowrap;
     }
+    .phase-item b { font-family: var(--font-mono); font-size: 10px; color: var(--accent); font-weight: 600; }
+    .phase-arrow { color: var(--text-muted); font-size: 14px; }
 
-    /* ── Background ── */
-    .bg-grid {
-      position: fixed; inset: 0; pointer-events: none; z-index: 0;
-      background-image:
-        linear-gradient(rgba(56,189,248,.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(56,189,248,.03) 1px, transparent 1px);
-      background-size: 40px 40px;
-    }
-    .bg-glow {
-      position: fixed; top: -200px; left: 50%; transform: translateX(-50%);
-      width: 900px; height: 400px; pointer-events: none; z-index: 0;
-      background: radial-gradient(ellipse, rgba(56,189,248,.055) 0%, transparent 70%);
-    }
-
-    /* ── Layout ── */
-    .wrap { position: relative; z-index: 1; max-width: 1080px; margin: 0 auto; padding: 0 32px; }
-
-    /* ── Top Bar ── */
-    .topbar { border-bottom: 1px solid var(--border); }
-    .topbar .wrap { display: flex; align-items: center; justify-content: space-between; height: 48px; }
-    .path { font-family: var(--mono); font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
-    .path .active { color: var(--sky); }
-    .online { display: flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 11px; color: var(--emerald); }
-    .dot-pulse { width: 6px; height: 6px; border-radius: 50%; background: var(--emerald); animation: pulse 2s infinite; }
-    @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.3; } }
-
-    /* ── Hero ── */
-    .hero { padding: 72px 0 56px; border-bottom: 1px solid var(--border); }
-    .hero-eyebrow {
-      font-family: var(--mono); font-size: 11px; color: var(--sky);
-      text-transform: uppercase; letter-spacing: .15em;
-      display: flex; align-items: center; gap: 10px; margin-bottom: 18px;
-    }
-    .hero-eyebrow::before { content:''; width: 24px; height: 1px; background: var(--sky); }
-    .hero-title {
-      font-family: var(--mono); font-weight: 700;
-      font-size: clamp(34px,5.5vw,56px);
-      line-height: 1.08; letter-spacing: -.02em;
-      color: var(--text); margin-bottom: 18px;
-    }
-    .hero-title span { color: var(--sky); }
-    .hero-desc { font-size: 15px; color: var(--text-dim); max-width: 540px; line-height: 1.75; margin-bottom: 32px; }
-    .badges { display: flex; flex-wrap: wrap; gap: 8px; }
-    .badge {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 5px 12px; border: 1px solid var(--border);
-      font-family: var(--mono); font-size: 11px; color: var(--text-dim);
-      background: var(--surface);
-    }
-    .badge .pip { width: 5px; height: 5px; border-radius: 50%; }
-
-    /* ── Phase Flow ── */
-    .phases { padding: 32px 0; border-bottom: 1px solid var(--border); }
-    .phases-label { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: .15em; color: var(--text-muted); margin-bottom: 16px; }
-    .phases-flow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-    .phase {
-      padding: 7px 14px; border: 1px solid var(--border);
-      background: var(--surface); font-family: var(--mono); font-size: 12px;
-      color: var(--text-dim); white-space: nowrap; cursor: default;
-      transition: border-color .2s, color .2s;
-    }
-    .phase:hover { border-color: var(--sky); color: var(--text); }
-    .phase b { color: var(--sky); font-weight: 400; margin-right: 5px; }
-    .arrow { color: var(--text-muted); font-size: 14px; user-select: none; }
-
-    /* ── Sections ── */
-    .section { padding: 44px 0 0; }
-    .section:last-of-type { padding-bottom: 64px; }
-    .sec-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 1px; }
-    .sec-title { font-family: var(--mono); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; }
-    .sec-title.sky    { color: var(--sky); }
-    .sec-title.amber  { color: var(--amber); }
-    .sec-title.em     { color: var(--emerald); }
-    .sec-count { font-family: var(--mono); font-size: 11px; color: var(--text-muted); }
-    .sec-line { flex: 1; height: 1px; }
-    .sec-line.sky    { background: linear-gradient(90deg, rgba(56,189,248,.3), transparent); }
-    .sec-line.amber  { background: linear-gradient(90deg, rgba(251,191,36,.3), transparent); }
-    .sec-line.em     { background: linear-gradient(90deg, rgba(52,211,153,.3), transparent); }
-
-    /* ── Cards ── */
-    .cards {
+    .nav-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
-      gap: 1px;
-      background: var(--border);
-      border: 1px solid var(--border);
-      margin-top: 16px;
+      grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+      gap: 8px;
     }
-    .card {
+    .nav-card {
       display: block; text-decoration: none;
-      background: var(--surface); padding: 22px 22px 22px 24px;
-      position: relative; overflow: hidden; transition: background .18s;
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg);
+      padding: 20px 20px 20px 22px;
+      position: relative; overflow: hidden;
+      transition: border-color var(--transition), box-shadow var(--transition), transform 0.25s cubic-bezier(0.16,1,0.3,1);
+      box-shadow: var(--shadow-sm);
     }
-    .card::before { content:''; position: absolute; left:0; top:0; bottom:0; width: 2px; }
-    .card.sky::before    { background: var(--sky); }
-    .card.amber::before  { background: var(--amber); }
-    .card.em::before     { background: var(--emerald); }
-    .card:hover { background: var(--surface-h); }
-    .card:hover .c-arrow { opacity: 1; transform: translateX(0); }
+    .nav-card::before {
+      content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+    }
+    .nav-card.c-accent::before { background: var(--accent); }
+    .nav-card.c-teal::before   { background: var(--teal); }
+    .nav-card.c-green::before  { background: var(--green); }
+    .nav-card:hover { border-color: var(--border-strong); box-shadow: var(--shadow-md); transform: translateY(-2px); }
+    .nav-card:hover .nav-card-arrow { opacity: 1; transform: translateX(0); color: var(--accent); }
 
-    .c-tag { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: .1em; margin-bottom: 8px; }
-    .c-tag.sky    { color: var(--sky); }
-    .c-tag.amber  { color: var(--amber); }
-    .c-tag.em     { color: var(--emerald); }
-    .c-name { font-size: 15px; font-weight: 500; color: var(--text); margin-bottom: 7px; line-height: 1.35; }
-    .c-desc { font-size: 13px; color: var(--text-dim); line-height: 1.6; }
-    .c-arrow {
-      position: absolute; top: 22px; right: 18px; font-size: 17px;
-      color: var(--text-muted); opacity: 0; transform: translateX(-4px);
-      transition: opacity .18s, transform .18s;
+    .nav-card-tag {
+      font-family: var(--font-mono); font-size: 10px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px;
+    }
+    .nav-card.c-accent .nav-card-tag { color: var(--accent); }
+    .nav-card.c-teal .nav-card-tag   { color: var(--teal); }
+    .nav-card.c-green .nav-card-tag  { color: var(--green); }
+
+    .nav-card-title {
+      font-family: var(--font-display); font-size: 17px; font-weight: 600;
+      color: var(--text); margin-bottom: 7px; line-height: 1.3; letter-spacing: -0.015em;
+    }
+    .nav-card-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+    .nav-card-arrow {
+      position: absolute; top: 18px; right: 16px; font-size: 16px;
+      color: var(--text-muted); opacity: 0; transform: translateX(-3px);
+      transition: opacity var(--transition), transform var(--transition), color var(--transition);
     }
 
-    /* ── Footer ── */
-    footer { border-top: 1px solid var(--border); }
-    footer .wrap { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; height: 52px; }
-    .f-text { font-family: var(--mono); font-size: 11px; color: var(--text-muted); }
-    .f-text a { color: var(--sky); text-decoration: none; }
-    .f-text a:hover { opacity: .7; }
+    .hero-badges { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
 
-    @media (max-width: 600px) {
-      .wrap { padding: 0 20px; }
-      .hero { padding: 48px 0 40px; }
+    @media (max-width: 640px) {
+      .nav-grid { grid-template-columns: 1fr; }
+      .phase-item { font-size: 12px; padding: 5px 10px; }
     }
   </style>
 </head>
 <body>
+<div class="page-wrap">
 
-<div class="bg-grid"></div>
-<div class="bg-glow"></div>
+  <header class="page-header">
+    <div class="page-eyebrow">Chromium Upgrade Toolkit</div>
+    <h1 class="page-title">升核<em>测试</em>工具集</h1>
+    <p class="page-subtitle">WebView 内核升级全流程工具：差异分析、基准跑分、API 兼容性回归、功能验证。覆盖 M124 → M141。</p>
+    <div class="hero-badges">
+      <span class="p-badge p-badge-accent">M124 → M141</span>
+      <span class="p-badge p-badge-teal">P1–P4 全流程</span>
+      <span class="p-badge p-badge-blue">10 个工具页面</span>
+    </div>
+  </header>
 
-<nav class="topbar">
-  <div class="wrap">
-    <div class="path">
-      <span>jt-519</span>
-      <span>/</span>
-      <span class="active">chromium</span>
-    </div>
-    <div class="online">
-      <span class="dot-pulse"></span>
-      ONLINE
-    </div>
+  <div class="phase-flow">
+    <div class="phase-item"><b>P0</b>差异分析</div>
+    <span class="phase-arrow">→</span>
+    <div class="phase-item"><b>P1</b>基准跑分</div>
+    <span class="phase-arrow">→</span>
+    <div class="phase-item"><b>P2</b>兼容性验证</div>
+    <span class="phase-arrow">→</span>
+    <div class="phase-item"><b>P3</b>业务回归</div>
+    <span class="phase-arrow">→</span>
+    <div class="phase-item"><b>P4</b>稳定性 / 灰度</div>
   </div>
-</nav>
 
-<header class="hero">
-  <div class="wrap">
-    <div class="hero-eyebrow">Chromium Upgrade Toolkit</div>
-    <h1 class="hero-title"><span>Chromium</span> 升核测试</h1>
-    <p class="hero-desc">WebView 内核升级全流程支撑工具：差异分析、基准测试、API 兼容性回归、功能验证。覆盖 M124 → M141。</p>
-    <div class="badges">
-      <span class="badge"><span class="pip" style="background:var(--sky)"></span>M124 → M141</span>
-      <span class="badge"><span class="pip" style="background:var(--amber)"></span>P1–P4 全流程</span>
-      <span class="badge"><span class="pip" style="background:var(--emerald)"></span>10 个测试页面</span>
-    </div>
-  </div>
-</header>
-
-<section class="phases">
-  <div class="wrap">
-    <div class="phases-label">升核流程</div>
-    <div class="phases-flow">
-      <div class="phase"><b>P0</b>差异分析</div>
-      <span class="arrow">→</span>
-      <div class="phase"><b>P1</b>基准跑分</div>
-      <span class="arrow">→</span>
-      <div class="phase"><b>P2</b>兼容性验证</div>
-      <span class="arrow">→</span>
-      <div class="phase"><b>P3</b>业务回归</div>
-      <span class="arrow">→</span>
-      <div class="phase"><b>P4</b>稳定性 / 灰度</div>
-    </div>
-  </div>
-</section>
-
-<section class="section">
-  <div class="wrap">
-    <div class="sec-head">
-      <span class="sec-title sky">基准测试</span>
-      <span class="sec-count">3</span>
-      <div class="sec-line sky"></div>
-    </div>
-    <div class="cards">
-      <a class="card sky" href="pages/webview_benchmarks.html">
-        <div class="c-tag sky">P1 — benchmarks</div>
-        <div class="c-name">基准工具集</div>
-        <div class="c-desc">Speedometer 3.0 / JetStream 2 / MotionMark / WebGL Aquarium 性能基准入口</div>
-        <span class="c-arrow">→</span>
+  <div class="p-section">
+    <div class="p-section-title">基准测试</div>
+    <div class="p-divider"></div>
+    <div class="nav-grid">
+      <a class="nav-card c-accent" href="pages/webview_benchmarks.html">
+        <div class="nav-card-tag">P1 — benchmarks</div>
+        <div class="nav-card-title">基准工具集</div>
+        <div class="nav-card-desc">Speedometer 3.0 / JetStream 2 / MotionMark / WebGL Aquarium 性能基准入口</div>
+        <span class="nav-card-arrow">→</span>
       </a>
-      <a class="card sky" href="pages/webview_test_plan.html">
-        <div class="c-tag sky">P1–P4 — plan</div>
-        <div class="c-name">升核测试方案</div>
-        <div class="c-desc">P1 性能基准 → P2 兼容性 → P3 业务回归 → P4 灰度验证，完整准出流程与量化标准</div>
-        <span class="c-arrow">→</span>
+      <a class="nav-card c-accent" href="pages/webview_test_plan.html">
+        <div class="nav-card-tag">P1–P4 — plan</div>
+        <div class="nav-card-title">升核测试方案</div>
+        <div class="nav-card-desc">P1 性能基准 → P2 兼容性 → P3 业务回归 → P4 灰度，完整准出流程与量化标准</div>
+        <span class="nav-card-arrow">→</span>
       </a>
-      <a class="card sky" href="pages/webview_resources.html">
-        <div class="c-tag sky">reference</div>
-        <div class="c-name">WebView 资源参考</div>
-        <div class="c-desc">升核相关官方文档、工具链、参考资源汇总</div>
-        <span class="c-arrow">→</span>
+      <a class="nav-card c-accent" href="pages/webview_resources.html">
+        <div class="nav-card-tag">reference</div>
+        <div class="nav-card-title">WebView 资源参考</div>
+        <div class="nav-card-desc">升核相关官方文档、工具链、参考资源汇总</div>
+        <span class="nav-card-arrow">→</span>
       </a>
     </div>
   </div>
-</section>
 
-<section class="section">
-  <div class="wrap">
-    <div class="sec-head">
-      <span class="sec-title amber">内核分析</span>
-      <span class="sec-count">4</span>
-      <div class="sec-line amber"></div>
-    </div>
-    <div class="cards">
-      <a class="card amber" href="pages/kernel_test.html">
-        <div class="c-tag amber">P2 — automation</div>
-        <div class="c-name">Kernel Test Suite</div>
-        <div class="c-desc">API 兼容性 + 性能回归自动化测试，支持 CDP 数据采集</div>
-        <span class="c-arrow">→</span>
+  <div class="p-section">
+    <div class="p-section-title">内核分析</div>
+    <div class="p-divider"></div>
+    <div class="nav-grid">
+      <a class="nav-card c-teal" href="pages/kernel_test.html">
+        <div class="nav-card-tag">P2 — automation</div>
+        <div class="nav-card-title">Kernel Test Suite</div>
+        <div class="nav-card-desc">API 兼容性 + 性能回归自动化测试，支持 CDP 数据采集</div>
+        <span class="nav-card-arrow">→</span>
       </a>
-      <a class="card amber" href="pages/kernel_upgrade_diff.html">
-        <div class="c-tag amber">P0 — diff</div>
-        <div class="c-name">内核差异分析</div>
-        <div class="c-desc">M124→M141 Breaking Changes / Security / WebView 差异速查</div>
-        <span class="c-arrow">→</span>
+      <a class="nav-card c-teal" href="pages/kernel_upgrade_diff.html">
+        <div class="nav-card-tag">P0 — diff</div>
+        <div class="nav-card-title">内核差异分析</div>
+        <div class="nav-card-desc">M124→M141 Breaking Changes / Security / WebView 差异速查</div>
+        <span class="nav-card-arrow">→</span>
       </a>
-      <a class="card amber" href="pages/kernel_changelog.html">
-        <div class="c-tag amber">P0 — changelog</div>
-        <div class="c-name">版本变更记录</div>
-        <div class="c-desc">逐版本重大变更，按 high / medium / low 影响等级筛选，附官方来源</div>
-        <span class="c-arrow">→</span>
+      <a class="nav-card c-teal" href="pages/kernel_changelog.html">
+        <div class="nav-card-tag">P0 — changelog</div>
+        <div class="nav-card-title">版本变更记录</div>
+        <div class="nav-card-desc">逐版本重大变更，按 high / medium / low 影响等级筛选，附官方来源</div>
+        <span class="nav-card-arrow">→</span>
       </a>
-      <a class="card amber" href="pages/kernel_test_help.html">
-        <div class="c-tag amber">docs</div>
-        <div class="c-name">测试帮助文档</div>
-        <div class="c-desc">Kernel Test Suite 使用说明与测试项解读</div>
-        <span class="c-arrow">→</span>
+      <a class="nav-card c-teal" href="pages/kernel_test_help.html">
+        <div class="nav-card-tag">docs</div>
+        <div class="nav-card-title">测试帮助文档</div>
+        <div class="nav-card-desc">Kernel Test Suite 使用说明与测试项解读</div>
+        <span class="nav-card-arrow">→</span>
       </a>
     </div>
   </div>
-</section>
 
-<section class="section">
-  <div class="wrap">
-    <div class="sec-head">
-      <span class="sec-title em">功能测试</span>
-      <span class="sec-count">3</span>
-      <div class="sec-line em"></div>
-    </div>
-    <div class="cards">
-      <a class="card em" href="pages/mse_test.html">
-        <div class="c-tag em">media / extensions</div>
-        <div class="c-name">MSE 测试</div>
-        <div class="c-desc">Media Source Extensions 媒体源及浏览器扩展管理功能测试</div>
-        <span class="c-arrow">→</span>
+  <div class="p-section">
+    <div class="p-section-title">功能测试</div>
+    <div class="p-divider"></div>
+    <div class="nav-grid">
+      <a class="nav-card c-green" href="pages/mse_test.html">
+        <div class="nav-card-tag">media / extensions</div>
+        <div class="nav-card-title">MSE 测试</div>
+        <div class="nav-card-desc">Media Source Extensions 媒体源及浏览器扩展管理功能测试</div>
+        <span class="nav-card-arrow">→</span>
       </a>
-      <a class="card em" href="pages/chromium_test.html">
-        <div class="c-tag em">css features</div>
-        <div class="c-name">CSS 特性测试</div>
-        <div class="c-desc">Chromium 版本间 CSS 特性支持差异验证</div>
-        <span class="c-arrow">→</span>
+      <a class="nav-card c-green" href="pages/chromium_test.html">
+        <div class="nav-card-tag">css features</div>
+        <div class="nav-card-title">CSS 特性测试</div>
+        <div class="nav-card-desc">Chromium 版本间 CSS 特性支持差异验证</div>
+        <span class="nav-card-arrow">→</span>
       </a>
-      <a class="card em" href="pages/nav_123.html">
-        <div class="c-tag em">navigation</div>
-        <div class="c-name">导航行为测试</div>
-        <div class="c-desc">WebView 导航跳转、历史栈、前进/后退行为验证</div>
-        <span class="c-arrow">→</span>
+      <a class="nav-card c-green" href="pages/nav_123.html">
+        <div class="nav-card-tag">navigation</div>
+        <div class="nav-card-title">导航行为测试</div>
+        <div class="nav-card-desc">WebView 导航跳转、历史栈、前进/后退行为验证</div>
+        <span class="nav-card-arrow">→</span>
       </a>
     </div>
   </div>
-</section>
 
-<footer>
-  <div class="wrap">
-    <div class="f-text"><a href="https://github.com/jt-519/chromium">github.com/jt-519/chromium</a></div>
-    <div class="f-text">M124 → M141</div>
-  </div>
-</footer>
-
+</div>
 </body>
 </html>
