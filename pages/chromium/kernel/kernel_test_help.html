@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#f4f1ea" />
+  <title>使用说明 | Kernel Test Suite</title>
+  <link rel="stylesheet" href="../../../assets/css/pages.css" />
+  <style>
+    .kh-wrap { max-width: 860px; }
+
+    /* ── Nav ── */
+    .kh-nav {
+      display: flex;
+      gap: 4px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 4px;
+      margin-bottom: 32px;
+      overflow-x: auto;
+      flex-wrap: nowrap;
+    }
+    .kh-nav-btn {
+      flex-shrink: 0;
+      padding: 8px 16px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      background: transparent;
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .kh-nav-btn:hover { color: var(--text-secondary); background: var(--bg-card); }
+    .kh-nav-btn.active { color: var(--accent); background: var(--bg-card); box-shadow: 0 0 0 1px var(--accent-border); }
+
+    /* ── Sections ── */
+    .kh-section { display: none; }
+    .kh-section.active { display: block; }
+
+    /* ── Common elements ── */
+    .kh-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 22px;
+      margin-bottom: 14px;
+    }
+    .kh-card-title {
+      font-family: var(--font-display);
+      font-size: 15px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text);
+      margin: 0 0 12px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .kh-card-title .icon { font-size: 16px; }
+    .kh-p {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.8;
+      margin: 0 0 10px 0;
+    }
+    .kh-p:last-child { margin-bottom: 0; }
+
+    .kh-h2 {
+      font-family: var(--font-display);
+      font-size: 22px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text);
+      margin: 0 0 20px 0;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .kh-step-list { list-style: none; padding: 0; margin: 0 0 14px 0; counter-reset: step; }
+    .kh-step-list li {
+      counter-increment: step;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+    .kh-step-list li:last-child { border-bottom: none; }
+    .kh-step-list li::before {
+      content: counter(step, decimal-leading-zero);
+      font-family: var(--font-display);
+      font-size: 18px;
+      color: var(--accent);
+      flex-shrink: 0;
+      line-height: 1.2;
+      width: 28px;
+    }
+
+    .kh-tag {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 3px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      vertical-align: middle;
+    }
+    .kh-tag.core { background: rgba(245,166,35,0.15); color: var(--accent); border: 1px solid var(--accent-border); }
+    .kh-tag.important { background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(77,159,255,0.35); }
+    .kh-tag.extended { background: var(--teal-dim); color: var(--teal); border: 1px solid rgba(0,217,180,0.3); }
+
+    /* ── Score table ── */
+    .kh-score-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      margin: 14px 0;
+    }
+    .kh-score-table th {
+      text-align: left;
+      padding: 8px 10px;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border-strong);
+      background: var(--bg-surface);
+    }
+    .kh-score-table td {
+      padding: 9px 10px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-secondary);
+      vertical-align: top;
+    }
+    .kh-score-table tr:last-child td { border-bottom: none; }
+    .kh-score-table td:first-child { color: var(--text); font-weight: 600; }
+    .kh-score-table td:nth-child(2) { text-align: center; }
+
+    .grade-dot {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 700;
+    }
+    .grade-dot.green { color: var(--green); }
+    .grade-dot.yellow { color: var(--accent); }
+    .grade-dot.orange { color: #fb923c; }
+    .grade-dot.red { color: var(--red); }
+
+    /* ── Formula box ── */
+    .kh-formula {
+      background: var(--bg-input);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--teal);
+      margin: 14px 0;
+      text-align: center;
+      letter-spacing: 0.03em;
+    }
+    .kh-formula .comment {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    /* ── API weight grid ── */
+    .kh-api-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 8px;
+      margin: 14px 0;
+    }
+    .kh-api-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 10px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+    }
+    .kh-api-name { font-family: var(--font-mono); font-size: 11px; color: var(--text-secondary); }
+    .kh-api-pt { font-family: var(--font-display); font-size: 16px; }
+    .kh-api-pt.pt5 { color: var(--accent); }
+    .kh-api-pt.pt3 { color: var(--blue); }
+    .kh-api-pt.pt1 { color: var(--teal); }
+
+    /* ── CDP code block ── */
+    .kh-code {
+      background: var(--bg-input);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      line-height: 1.8;
+      color: var(--text-secondary);
+      white-space: pre-wrap;
+      word-break: break-all;
+      margin: 12px 0;
+      overflow-x: auto;
+    }
+    .kh-code .kw { color: var(--accent); }
+    .kh-code .str { color: var(--green); }
+    .kh-code .cmt { color: var(--text-muted); font-style: italic; }
+    .kh-code .key { color: var(--teal); }
+
+    /* ── Module table ── */
+    .kh-mod-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      margin: 14px 0;
+    }
+    .kh-mod-table th {
+      text-align: left;
+      padding: 8px 12px;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border-strong);
+      background: var(--bg-surface);
+    }
+    .kh-mod-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-secondary);
+      vertical-align: top;
+      line-height: 1.6;
+    }
+    .kh-mod-table tr:last-child td { border-bottom: none; }
+    .kh-mod-table td:first-child { color: var(--accent); font-weight: 700; white-space: nowrap; }
+    .kh-mod-table td:nth-child(2) { color: var(--text); white-space: nowrap; }
+
+    .kh-link {
+      color: var(--teal);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(0,217,180,0.3);
+      transition: border-color 0.2s;
+    }
+    .kh-link:hover { border-color: var(--teal); }
+
+    /* ── Back link ── */
+    .kh-back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-muted);
+      text-decoration: none;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 6px 12px;
+      margin-bottom: 8px;
+      transition: all 0.2s;
+    }
+    .kh-back-btn:hover { color: var(--accent); border-color: var(--accent-border); }
+
+    @media (max-width: 600px) {
+      .kh-api-grid { grid-template-columns: 1fr 1fr; }
+      .kh-score-table, .kh-mod-table { font-size: 11px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-wrap kh-wrap">
+    <header class="page-header">
+      <a href="../../../index.html" class="page-back">返回首页</a>
+      <div class="page-eyebrow">Chromium · Kernel Test Suite</div>
+      <h1 class="page-title">使用 <em>说明</em></h1>
+      <p class="page-subtitle">测试指南 · 模块说明 · 评分方案 · CDP 接入</p>
+    </header>
+
+    <a href="kernel_test.html" class="kh-back-btn">← 返回测试页</a>
+
+    <!-- Nav -->
+    <nav class="kh-nav">
+      <button class="kh-nav-btn active" data-sec="guide">使用指南</button>
+      <button class="kh-nav-btn" data-sec="modules">模块说明</button>
+      <button class="kh-nav-btn" data-sec="scoring" id="nav-scoring">评分方案</button>
+      <button class="kh-nav-btn" data-sec="cdp">CDP 接入</button>
+      <button class="kh-nav-btn" data-sec="faq">FAQ</button>
+    </nav>
+
+    <!-- ═══ GUIDE ═══ -->
+    <section class="kh-section active" id="sec-guide">
+      <h2 class="kh-h2">快速上手</h2>
+
+      <div class="kh-card">
+        <div class="kh-card-title"><span class="icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>完整测试流程</div>
+        <ol class="kh-step-list">
+          <li>在<strong>旧版 WebView</strong>（升核前）中打开 <strong>kernel_test.html</strong></li>
+          <li>点击 <strong>Run All Tests</strong>，等待进度条跑完（约 30–60 秒）</li>
+          <li>点击 <strong>导出 JSON</strong> 保存结果文件（建议命名含版本号，如 <code>chromium_118.json</code>）</li>
+          <li>升级到新版内核后，重新打开 <strong>kernel_test.html</strong></li>
+          <li>点击 <strong>导入基准</strong>，选择步骤 3 中保存的 JSON 文件</li>
+          <li>点击 <strong>Run All Tests</strong>，运行新版测试</li>
+          <li>点击 <strong>查看报告</strong>，自动显示新旧对比——退化项红色标注，改进项绿色标注</li>
+        </ol>
+      </div>
+
+      <div class="kh-card">
+        <div class="kh-card-title"><span class="icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="1"/><line x1="12" y1="2" x2="12" y2="6"/></svg></span>分 Tab 运行</div>
+        <p class="kh-p">每个 Tab 左上角有独立的 <strong>Run [Tab]</strong> 按钮，可单独跑某个模块快速验证。</p>
+        <p class="kh-p" style="color:var(--red);opacity:0.85;">注意：单独运行 Tab 会清空其他 Tab 的历史结果，导出前请确认已完成全量测试。</p>
+      </div>
+
+      <div class="kh-card">
+        <div class="kh-card-title"><span class="icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span>升核对比方法</div>
+        <p class="kh-p"><strong>推荐：</strong>使用工具栏「导入基准」功能——导入旧版 JSON 后运行新版测试，报告中自动生成新旧对比表格，无需手动脚本。基准数据保存在 <code>localStorage('kernel_test_baseline')</code>，跨会话保留。</p>
+        <p class="kh-p">如需在 CI/CD 中自动对比或自定义逻辑，可使用脚本方式：</p>
+        <div class="kh-code"><span class="cmt">// 对比脚本示例（Node.js）</span>
+<span class="kw">const</span> <span class="key">old</span> = JSON.parse(fs.readFileSync(<span class="str">'chromium_118.json'</span>));
+<span class="kw">const</span> <span class="key">neu</span> = JSON.parse(fs.readFileSync(<span class="str">'chromium_128.json'</span>));
+
+<span class="cmt">// 按评分公式计算 API 能力分数（JSON 中无 score 字段，需手动计算）</span>
+<span class="kw">const</span> weights = { localStorage:5, sessionStorage:5, indexedDB:5, fetch:5,
+  websocket:5, wasm:5, webgl:5, canvas2d:5, crypto:5,
+  xhr:3, worker:3, webgl2:3, webrtc:3,
+  intersectionObs:3, resizeObs:3, mutationObs:3,
+  serviceWorker:1, mediaRecorder:1,
+  sharedWorker:1, offscreen:1, webgpu:1, broadcastCh:1,
+  sharedBuf:1, notification:1, geolocation:1, perfObserver:1 };
+
+<span class="kw">function</span> calcScore(basic) {
+  let earned = 0, possible = 0;
+  Object.entries(weights).forEach(([id, w]) => {
+    <span class="kw">if</span> (basic[id] === <span class="str">'N/A'</span> || basic[id] === undefined) return;
+    possible += w;
+    <span class="kw">if</span> (basic[id] === <span class="str">'PASS'</span>) earned += w;
+  });
+  <span class="kw">return</span> possible > 0 ? 20 + Math.round(earned / possible * 80) : 0;
+}
+
+console.log(<span class="str">'旧版得分:'</span>, calcScore(old.tabs.basic));
+console.log(<span class="str">'新版得分:'</span>, calcScore(neu.tabs.basic));
+
+<span class="cmt">// 找出新版新增支持的 API</span>
+Object.keys(neu.tabs.basic).forEach(id => {
+  <span class="kw">if</span> (neu.tabs.basic[id] === <span class="str">'PASS'</span> && old.tabs.basic[id] !== <span class="str">'PASS'</span>)
+    console.log(<span class="str">'✓ 新增:'</span>, id);
+  <span class="kw">if</span> (neu.tabs.basic[id] !== <span class="str">'PASS'</span> && old.tabs.basic[id] === <span class="str">'PASS'</span>)
+    console.log(<span class="str">'✗ 退化:'</span>, id);
+});</div>
+      </div>
+
+      <div class="kh-card">
+        <div class="kh-card-title"><span class="icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6M4.22 4.22l4.24 4.24m7.08 7.08l4.24 4.24M1 12h6m6 0h6M4.22 19.78l4.24-4.24m7.08-7.08l4.24-4.24"/></svg></span>CDP 配置覆盖</div>
+        <p class="kh-p">在页面加载前注入 <code>window.__KERNEL_TEST_CONFIG__</code> 可覆盖默认参数：</p>
+        <div class="kh-code">window.__KERNEL_TEST_CONFIG__ = {
+  scrollDuration:      2000,   <span class="cmt">// 滚动测试持续时间(ms)</span>
+  canvasDuration:      3000,   <span class="cmt">// Canvas FPS 测试时长(ms)</span>
+  canvasBalls:         1000,   <span class="cmt">// Canvas 球数量</span>
+  webglTriangles:      5000,   <span class="cmt">// WebGL 三角形数量</span>
+  webglDuration:       3000,   <span class="cmt">// WebGL FPS 测试时长(ms)</span>
+  stressMemIterations: 50,     <span class="cmt">// 内存压力迭代次数</span>
+  stressMemDelay:      100,    <span class="cmt">// 每次迭代间隔(ms)</span>
+  stressIframeCount:   50,     <span class="cmt">// iframe 压力数量</span>
+  stressDomCount:      50000,  <span class="cmt">// DOM 节点压力数量</span>
+  stressCanvasCount:   3000,   <span class="cmt">// Canvas 对象压力数量</span>
+  stressTimeout:       15000,  <span class="cmt">// 压力测试超时(ms)</span>
+};</div>
+      </div>
+    </section>
+
+    <!-- ═══ MODULES ═══ -->
+    <section class="kh-section" id="sec-modules">
+      <h2 class="kh-h2">模块说明</h2>
+
+      <table class="kh-mod-table">
+        <thead>
+          <tr>
+            <th>Tab</th>
+            <th>项数</th>
+            <th>测试内容</th>
+            <th>升核关注点</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Basic</td>
+            <td>26 项</td>
+            <td>Web API 能力检测：Storage、Worker、WebGL、WASM、WebRTC、Crypto 等</td>
+            <td>参与打分的核心模块，API 退化直接影响业务功能</td>
+          </tr>
+          <tr>
+            <td>Performance</td>
+            <td>8 项</td>
+            <td>JS 引擎（Math.sqrt、JSON、Regex）、DOM 操作（创建/删除/查询）、渲染（Scroll FPS、Canvas FPS）</td>
+            <td>性能数值仅供参考，不参与打分；关注前后版本的显著退化（>15%）</td>
+          </tr>
+          <tr>
+            <td>Storage</td>
+            <td>7 项</td>
+            <td>localStorage / sessionStorage / IndexedDB 读写延迟，Cookie 读写</td>
+            <td>IDB 写入时间超过 200ms 需关注，可能影响离线缓存场景</td>
+          </tr>
+          <tr>
+            <td>Media</td>
+            <td>10 项</td>
+            <td>H.264 / VP9 / H.265 / AV1 / AAC / Opus 解码支持，WebGL / WebGL2 / Canvas 2D 渲染，WebRTC DataChannel</td>
+            <td>H.264 和 AAC 是核心，H.265 / AV1 是加分项；WebRTC 在部分 WebView 配置下可能被禁用</td>
+          </tr>
+          <tr>
+            <td>Stress</td>
+            <td>4 项</td>
+            <td>内存压力（50 × 100K 数组）、50 个 iframe、50K DOM 节点、3K Canvas 对象</td>
+            <td>出现 TIMEOUT 说明内核在压力下响应不达标；内存压力 delta 异常大需排查泄漏</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="kh-card">
+        <div class="kh-card-title"><span class="icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span>测试结果值说明</div>
+        <table class="kh-score-table">
+          <thead><tr><th>结果值</th><th>含义</th><th>对应场景</th></tr></thead>
+          <tbody>
+            <tr><td>PASS</td><td>能力存在且可用</td><td>Basic 模块 API 检测通过</td></tr>
+            <tr><td>Supported</td><td>编解码格式支持</td><td>Media 模块 canPlayType 返回非空</td></tr>
+            <tr><td>N/A</td><td>API 不存在（不计为失败）</td><td>SharedWorker、SharedArrayBuffer 等在部分 WebView 中被禁用</td></tr>
+            <tr><td>FAIL</td><td>能力不可用或运行出错</td><td>API 存在但调用失败</td></tr>
+            <tr><td>TIMEOUT</td><td>压力测试超时</td><td>超过 stressTimeout 配置（默认 15s）</td></tr>
+            <tr><td>142 ms</td><td>性能指标数值</td><td>Performance / Storage 模块耗时</td></tr>
+            <tr><td>58 fps</td><td>帧率指标</td><td>Scroll / Canvas FPS 测试</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ═══ SCORING ═══ -->
+    <section class="kh-section" id="sec-scoring">
+      <h2 class="kh-h2">API 能力评分方案</h2>
+
+      <div class="kh-card">
+        <div class="kh-card-title"><span class="icon">📐</span>评分范围与公式</div>
+        <p class="kh-p">评分仅基于 <strong>Basic Tab 的 26 项 API 能力</strong>，性能指标不参与计算。<strong>N/A 项（环境限制，非真正失败）同时排除出分子和分母</strong>，不会压低实际得分。</p>
+        <div class="kh-formula">
+          Score = 20 + round( earned_points / effective_possible × 80 )
+          <div class="comment">基础分 20 + API 能力得分（最高 80）= 满分 100 · N/A 项不计入 effective_possible</div>
+        </div>
+        <p class="kh-p">其中 <code>total_points</code> = 核心(9×5) + 重要(7×3) + 扩展(10×1) = <strong>76 分</strong>（N/A 项排除后实际可得分上限，<code>earned_points</code> 为实际通过项目分值之和）。</p>
+      </div>
+
+      <div class="kh-card">
+        <div class="kh-card-title"><span class="icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M5.5 8l13-2M5.5 16l13 2"/></svg></span>权重分配</div>
+        <p class="kh-p">三档权重，核心 API 权重最高——缺失会直接阻断主流业务场景：</p>
+
+        <p class="kh-p" style="margin-top:14px;"><span class="kh-tag core">CORE 5pt</span> 缺失直接影响业务</p>
+        <div class="kh-api-grid">
+          <div class="kh-api-item"><span class="kh-api-name">LocalStorage</span><span class="kh-api-pt pt5">5</span></div>
+          <div class="kh-api-item"><span class="kh-api-name">SessionStorage</span><span class="kh-api-pt pt5">5</span></div>
+          <div class="kh-api-item"><span class="kh-api-name">IndexedDB</span><span class="kh-api-pt pt5">5</span></div>
+          <div class="kh-api-item"><span class="kh-api-name">Fetch API</span><span class="kh-api-pt pt5">5</span></div>
+          <div class="kh-api-item"><span class="kh-api-name">WebSocket</span><span class="kh-api-pt pt5">5</span></div>
+          <div class="kh-api-item"><span class="kh-api-name">WebAssembly</span><span class="kh-api-pt pt5">5</span></div>
+          <div class="kh-api-item"><span class="kh-api-name">WebGL</span><span class="kh-api-pt pt5">5</span></div>
+          <div class="kh-api-item"><span class="kh-api-name">Canvas 2D</span><span class="kh-api-pt pt5">5</span></div>
+          <div class="kh-api-item"><span class="kh-api-name">Web Crypto</span><span class="kh-api-pt pt5">5</span></div>
+        </div>
+
+        <p class="kh-p" style="margin-top:14px;"><span class="kh-tag important">IMPORTANT 3pt</span> 主流功能，缺失影响部分场景</p>
+        <div class="kh-api-grid">
+          <div class="kh-api-item"><span class="kh-api-name">XMLHttpRequest</span><span class="kh-api-pt pt3">3</span></div>
+          <div class="kh-api-item"><span class="kh-api-name">Web Worker</span><span class="kh-api-pt pt3">3</span></div>
+          <div class="kh-api-item"><span class="kh-api-name">WebGL 2</span><span class="kh-api-pt pt3">3</span></div>
+          <div class="kh-api-item"><span class="kh-api-name">WebRTC</span><span class="kh-api-pt pt3">3</span></div>
+          <div class="kh-api-item"><span class="kh-api-name">IntersectionObserver</span><span class="kh-api-pt pt3">3</span></div>
+          <div class="kh-api-item"><span class="kh-api-name">ResizeObserver</span><span class="kh-api-pt pt3">3</span></div>
+          <div class="kh-api-item"><span class="kh-api-name">MutationObserver</span><span class="kh-api-pt pt3">3</span></div>
+        </div>
+
+        <p class="kh-p" style="margin-top:14px;"><span class="kh-tag extended">EXTENDED 1pt</span> 加分项，缺失可接受</p>
+        <div class="kh-api-grid">
+          <div class="kh-api-item"><span class="kh-api-name">ServiceWorker</span><span class="kh-api-pt pt1">1</span></div>
+          <div class="kh-api-item"><span class="kh-api-name">MediaRecorder</span><span class="kh-api-pt pt1">1</span></div>
+          <div class="kh-api-item"><span class="kh-api-name">SharedWorker</span><span class="kh-api-pt pt1">1</span></div>
+          <div class="kh-api-item"><span class="kh-api-name">OffscreenCanvas</span><span class="kh-api-pt pt1">1</span></div>
+          <div class="kh-api-item"><span class="kh-api-name">WebGPU</span><span class="kh-api-pt pt1">1</span></div>
+          <div class="kh-api-item"><span class="kh-api-name">BroadcastChannel</span><span class="kh-api-pt pt1">1</span></div>
+          <div class="kh-api-item"><span class="kh-api-name">SharedArrayBuffer</span><span class="kh-api-pt pt1">1</span></div>
+          <div class="kh-api-item"><span class="kh-api-name">Notification</span><span class="kh-api-pt pt1">1</span></div>
+          <div class="kh-api-item"><span class="kh-api-name">Geolocation</span><span class="kh-api-pt pt1">1</span></div>
+          <div class="kh-api-item"><span class="kh-api-name">PerformanceObserver</span><span class="kh-api-pt pt1">1</span></div>
+        </div>
+      </div>
+
+      <div class="kh-card">
+        <div class="kh-card-title"><span class="icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>评级与准出建议</div>
+        <table class="kh-score-table">
+          <thead><tr><th>分数区间</th><th>等级</th><th>建议</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>95 – 100</td>
+              <td><span class="grade-dot green">🟢 优秀</span></td>
+              <td>可正常发版，API 能力完整</td>
+            </tr>
+            <tr>
+              <td>85 – 94</td>
+              <td><span class="grade-dot yellow">🟡 良好</span></td>
+              <td>可发版，需在报告中标注失分 API，评估业务影响</td>
+            </tr>
+            <tr>
+              <td>70 – 84</td>
+              <td><span class="grade-dot orange">🟠 待改进</span></td>
+              <td>建议推迟发版，逐项分析失分原因，确认无阻断性影响后可酌情通过</td>
+            </tr>
+            <tr>
+              <td>0 – 69</td>
+              <td><span class="grade-dot red">🔴 不通过</span></td>
+              <td>阻塞升核，核心 API 存在缺失，必须修复后重测</td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="kh-p" style="margin-top:10px;">N/A（不支持）不计入失分，不影响得分。评分仅反映 API 能力，性能退化需结合 Performance Tab 数值单独判断。</p>
+      </div>
+
+      <div class="kh-card">
+        <div class="kh-card-title"><span class="icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>N/A 诊断指南</div>
+        <p class="kh-p">N/A 表示 API 在当前环境不可用。<strong>"预期 N/A"</strong>不需处理；<strong>"非预期 N/A"</strong>需结合 chrome://flags、Manifest 配置或 ROM 厂商定制排查。</p>
+        <table class="kh-score-table" style="margin-top:10px;">
+          <thead><tr><th>API</th><th>典型 N/A 场景</th><th>排查方向</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><code>SharedArrayBuffer</code></td>
+              <td>✅ 预期：未开启 COOP/COEP 跨域隔离头</td>
+              <td>检查响应头 <code>Cross-Origin-Opener-Policy: same-origin</code> + <code>Cross-Origin-Embedder-Policy: require-corp</code></td>
+            </tr>
+            <tr>
+              <td><code>SharedWorker</code></td>
+              <td>✅ 预期：Android WebView 全版本不支持</td>
+              <td>仅桌面 Chromium 可用，WebView 中不应依赖</td>
+            </tr>
+            <tr>
+              <td><code>WebGPU</code></td>
+              <td>✅ 预期：Chromium &lt; 113 或未启用 <code>--enable-unsafe-webgpu</code></td>
+              <td>WebView 113+ 默认仍未启用，需厂商定制</td>
+            </tr>
+            <tr>
+              <td><code>Notification</code></td>
+              <td>✅ 预期：WebView 默认禁用通知</td>
+              <td>需宿主 App 实现 <code>onPermissionRequest</code> 桥接</td>
+            </tr>
+            <tr>
+              <td><code>Geolocation</code></td>
+              <td>✅ 预期：WebView 默认未授权定位</td>
+              <td>需宿主 App 实现 <code>onGeolocationPermissionsShowPrompt</code></td>
+            </tr>
+            <tr>
+              <td><code>ServiceWorker</code></td>
+              <td>✅ 预期：Android WebView 默认禁用</td>
+              <td>需宿主调用 <code>WebSettings.setAllowFileAccess(true)</code> + 自定义 <code>ServiceWorkerClient</code></td>
+            </tr>
+            <tr>
+              <td><code>WebRTC</code></td>
+              <td>⚠️ 排查：部分厂商 ROM 阉割了 RTCPeerConnection</td>
+              <td>对照原厂 Chromium 同版本验证；若仅本机失败考虑厂商定制问题</td>
+            </tr>
+            <tr>
+              <td><code>OffscreenCanvas</code></td>
+              <td>⚠️ 排查：Chromium 69+ 应支持，N/A 说明被定制移除</td>
+              <td>检查 ROM 是否裁剪 Canvas Worker 相关代码</td>
+            </tr>
+            <tr>
+              <td><code>WebGL2</code> / <code>WebGL</code></td>
+              <td>❌ 异常：核心图形 API 不应 N/A</td>
+              <td>检查 GPU 驱动黑名单 <code>chrome://gpu</code>，或硬件加速被禁用</td>
+            </tr>
+            <tr>
+              <td><code>IndexedDB</code> / <code>localStorage</code></td>
+              <td>❌ 异常：核心存储 API 不应 N/A</td>
+              <td>检查私密浏览模式、磁盘配额、或宿主 App 的 <code>WebSettings.setDomStorageEnabled</code></td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="kh-p" style="margin-top:10px;"><strong>✅ 预期</strong> 表示环境性质决定，无需处理；<strong>⚠️ 排查</strong> 需对比原厂 Chromium 同版本表现；<strong>❌ 异常</strong> 必须修复，否则核心业务受阻。</p>
+      </div>
+
+      <div class="kh-card">
+        <div class="kh-card-title"><span class="icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>JSON 结果中的得分字段</div>
+        <p class="kh-p">运行完成后，<code>window.__KERNEL_TEST_RESULT__</code> 包含完整结果，可通过 CDP 读取：</p>
+        <div class="kh-code">{
+  <span class="key">"timestamp"</span>: <span class="str">"2024-11-01T08:30:00.000Z"</span>,
+  <span class="key">"ua"</span>: <span class="str">"Mozilla/5.0 ..."</span>,
+  <span class="key">"browser"</span>: { <span class="key">"chromium"</span>: <span class="str">"128"</span>, <span class="key">"android"</span>: <span class="str">"14"</span>, ... },
+  <span class="key">"summary"</span>: {
+    <span class="key">"total"</span>: 45,
+    <span class="key">"pass"</span>: 38,
+    <span class="key">"fail"</span>: 2,
+    <span class="key">"unsupported"</span>: 5,
+    <span class="key">"completed"</span>: 45
+  },
+  <span class="key">"tabs"</span>: {
+    <span class="key">"basic"</span>: {
+      <span class="key">"localStorage"</span>: <span class="str">"PASS"</span>,
+      <span class="key">"webgpu"</span>: <span class="str">"N/A"</span>,
+      ...
+    },
+    <span class="key">"performance"</span>: { <span class="key">"jsLoop"</span>: <span class="str">"142 ms"</span>, ... },
+    ...
+  }
+}</div>
+        <p class="kh-p">注：得分由前端实时计算，JSON 结果中不存储 score 字段，需在读取后按公式计算，或直接对比 <code>tabs.basic</code> 中各 id 的值。</p>
+      </div>
+    </section>
+
+    <!-- ═══ CDP ═══ -->
+    <section class="kh-section" id="sec-cdp">
+      <h2 class="kh-h2">CDP 自动化接入</h2>
+
+      <div class="kh-card">
+        <div class="kh-card-title"><span class="icon">🐍</span>Python / pyppeteer 示例</div>
+        <div class="kh-code">import asyncio, json
+from pyppeteer import launch
+
+async def run_kernel_test():
+    browser = await launch(headless=True)
+    page = await browser.newPage()
+    cdp = await page.target.createCDPSession()
+    await cdp.send(<span class="str">'Performance.enable'</span>)
+
+    await page.goto(<span class="str">'http://localhost/kernel_test.html'</span>)
+    await page.click(<span class="str">'#btnRunAll'</span>)
+    await page.waitForFunction(
+        <span class="str">'() => window.__KERNEL_TEST_RESULT__ != null'</span>,
+        timeout=120000
+    )
+    result = await page.evaluate(<span class="str">'() => window.__KERNEL_TEST_RESULT__'</span>)
+    metrics = await cdp.send(<span class="str">'Performance.getMetrics'</span>)
+
+    <span class="cmt"># 计算 API 能力分数</span>
+    weights = {
+        <span class="str">'localStorage'</span>:5, <span class="str">'sessionStorage'</span>:5, <span class="str">'indexedDB'</span>:5, <span class="str">'fetch'</span>:5,
+        <span class="str">'websocket'</span>:5, <span class="str">'wasm'</span>:5, <span class="str">'webgl'</span>:5, <span class="str">'canvas2d'</span>:5, <span class="str">'crypto'</span>:5,
+        <span class="str">'xhr'</span>:3, <span class="str">'worker'</span>:3, <span class="str">'webgl2'</span>:3, <span class="str">'webrtc'</span>:3,
+        <span class="str">'intersectionObs'</span>:3, <span class="str">'resizeObs'</span>:3, <span class="str">'mutationObs'</span>:3,
+        <span class="str">'serviceWorker'</span>:1, <span class="str">'mediaRecorder'</span>:1,
+        <span class="str">'sharedWorker'</span>:1, <span class="str">'offscreen'</span>:1, <span class="str">'webgpu'</span>:1, <span class="str">'broadcastCh'</span>:1,
+        <span class="str">'sharedBuf'</span>:1, <span class="str">'notification'</span>:1, <span class="str">'geolocation'</span>:1, <span class="str">'perfObserver'</span>:1,
+    }
+    basic = result[<span class="str">'tabs'</span>][<span class="str">'basic'</span>]
+    earned   = sum(w for k,w in weights.items() if basic.get(k) == <span class="str">'PASS'</span>)
+    possible = sum(w for k,w in weights.items() if basic.get(k) not in (<span class="str">'N/A'</span>, None))
+    score    = 20 + round(earned / possible * 80) <span class="kw">if</span> possible > 0 <span class="kw">else</span> 0
+
+    print(f<span class="str">"API 能力得分: {score}/100"</span>)
+    print(json.dumps(result[<span class="str">'summary'</span>], indent=2, ensure_ascii=False))
+    await browser.close()
+
+asyncio.run(run_kernel_test())</div>
+      </div>
+
+      <div class="kh-card">
+        <div class="kh-card-title"><span class="icon">🟨</span>Node.js / Playwright 示例</div>
+        <div class="kh-code"><span class="kw">const</span> { chromium } = require(<span class="str">'playwright'</span>);
+
+(async () => {
+  <span class="kw">const</span> browser = await chromium.launch();
+  <span class="kw">const</span> page = await browser.newPage();
+  await page.goto(<span class="str">'http://localhost/kernel_test.html'</span>);
+  await page.click(<span class="str">'#btnRunAll'</span>);
+  await page.waitForFunction(
+    <span class="str">'() => window.__KERNEL_TEST_RESULT__ != null'</span>,
+    { timeout: 120000 }
+  );
+
+  <span class="kw">const</span> result = await page.evaluate(<span class="str">'() => window.__KERNEL_TEST_RESULT__'</span>);
+
+  <span class="cmt">// CI: 检查核心 API 全部通过</span>
+  <span class="kw">const</span> core = [<span class="str">'localStorage'</span>,<span class="str">'sessionStorage'</span>,<span class="str">'indexedDB'</span>,
+                <span class="str">'fetch'</span>,<span class="str">'websocket'</span>,<span class="str">'wasm'</span>,<span class="str">'webgl'</span>,<span class="str">'canvas2d'</span>,<span class="str">'crypto'</span>];
+  <span class="kw">const</span> failed = core.filter(id => result.tabs.basic[id] !== <span class="str">'PASS'</span>);
+
+  <span class="kw">if</span> (failed.length > 0) {
+    console.error(<span class="str">'❌ 核心 API 失败:'</span>, failed.join(<span class="str">', '</span>));
+    process.exit(1);
+  }
+  console.log(<span class="str">'✅ 核心 API 全部通过'</span>);
+  await browser.close();
+})();</div>
+      </div>
+
+      <div class="kh-card">
+        <div class="kh-card-title"><span class="icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg></span>可用 CDP 命令</div>
+        <table class="kh-score-table">
+          <thead><tr><th>目的</th><th>CDP 命令</th></tr></thead>
+          <tbody>
+            <tr><td>读取测试结果</td><td><code>Runtime.evaluate → window.__KERNEL_TEST_RESULT__</code></td></tr>
+            <tr><td>性能指标</td><td><code>Performance.getMetrics</code></td></tr>
+            <tr><td>页面时序</td><td><code>Performance.enable → Page.loadEventFired</code></td></tr>
+            <tr><td>内存快照</td><td><code>HeapProfiler.takeHeapSnapshot</code></td></tr>
+            <tr><td>网络拦截</td><td><code>Network.enable → requestWillBeSent</code></td></tr>
+            <tr><td>截图</td><td><code>Page.captureScreenshot</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ═══ FAQ ═══ -->
+    <section class="kh-section" id="sec-faq">
+      <h2 class="kh-h2">常见问题</h2>
+
+      <div class="kh-card">
+        <div class="kh-card-title"><span class="icon">❓</span>SharedArrayBuffer / SharedWorker 显示 N/A，是 Bug 吗？</div>
+        <p class="kh-p">不是。部分 Android WebView 配置中这些 API 被系统策略禁用（如 COOP/COEP 未启用），N/A 表示该环境不支持，不会影响评分。</p>
+      </div>
+
+      <div class="kh-card">
+        <div class="kh-card-title"><span class="icon">❓</span>运行单个 Tab 后，其他 Tab 结果消失了？</div>
+        <p class="kh-p">这是已知行为：单 Tab 运行会重置全局计数器和结果对象。如需对比多模块数据，请始终使用 <strong>Run All Tests</strong>，最后导出完整 JSON。</p>
+      </div>
+
+      <div class="kh-card">
+        <div class="kh-card-title"><span class="icon">❓</span>WebRTC / ServiceWorker 显示 FAIL，如何排查？</div>
+        <p class="kh-p">WebRTC DataChannel 在部分受限 WebView（如 flag <code>--disable-webrtc</code>）中会失败；ServiceWorker 在非 HTTPS 或 file:// 协议下不可用。确认页面协议和 WebView flags 配置后重测。</p>
+      </div>
+
+      <div class="kh-card">
+        <div class="kh-card-title"><span class="icon">❓</span>Stress 测试出现 TIMEOUT，正常吗？</div>
+        <p class="kh-p">低端设备或受限内存配置下属于正常现象。可通过 <code>__KERNEL_TEST_CONFIG__</code> 降低 <code>stressDomCount</code>、<code>stressIframeCount</code> 或增大 <code>stressTimeout</code> 来适配设备能力。</p>
+      </div>
+
+      <div class="kh-card">
+        <div class="kh-card-title"><span class="icon">❓</span>打分 80 分，能发版吗？</div>
+        <p class="kh-p">80 分属于「待改进」区间。建议检查具体失分项是否与业务功能强相关：若失分全部来自 <span class="kh-tag extended">EXTENDED 1pt</span> 扩展项，实际影响有限，可评估通过；若有 <span class="kh-tag core">CORE 5pt</span> 或 <span class="kh-tag important">IMPORTANT 3pt</span> 失分，需要分析根因再做决策。</p>
+      </div>
+
+      <div class="kh-card">
+        <div class="kh-card-title"><span class="icon">❓</span>如何跨版本对比两次测试结果？</div>
+        <p class="kh-p"><strong>内置对比（推荐）：</strong>旧核运行后导出 JSON；升核后在新页面点击「<strong>导入基准</strong>」选择该 JSON 文件，再运行测试。打开报告即可看到每项测试的新旧对比——退化项红色标注，改进项绿色标注，性能指标显示百分比变化（&gt; 10% 高亮）。基准存储在 <code>localStorage('kernel_test_baseline')</code>，跨会话保留，点击「清除基准」可重置。</p>
+        <p class="kh-p"><strong>脚本对比：</strong>用于 CI/CD 或自定义对比逻辑，使用「使用指南」中的 Node.js / Python 示例对比两份 JSON 的 <code>tabs.basic</code> 字段。JSON 中不包含 score 字段，需按公式计算。</p>
+        <p class="kh-p">此外，每次测试结果会自动写入 <code>localStorage('kernel_test_result')</code>，可通过开发者工具快速取回最近一次结果，但不保留历史记录（每次运行会覆盖）。</p>
+      </div>
+    </section>
+  </div>
+
+  <button class="qr-btn"></button>
+  <script src="../../../assets/js/vendor/qrcode.js"></script>
+  <script>
+    const navBtns = document.querySelectorAll('.kh-nav-btn');
+    const sections = document.querySelectorAll('.kh-section');
+    navBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const target = btn.dataset.sec;
+        navBtns.forEach(b => b.classList.remove('active'));
+        sections.forEach(s => s.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('sec-' + target).classList.add('active');
+      });
+    });
+
+    // 支持 URL hash 直接跳转到某 section（如 #scoring）
+    const hash = location.hash.replace('#', '');
+    if (hash) {
+      const btn = document.querySelector(`[data-sec="${hash}"]`);
+      if (btn) btn.click();
+    }
+  </script>
+</body>
+</html>

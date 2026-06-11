@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#f4f1ea" />
+  <title>升核资源 | WebView 升核</title>
+  <link rel="stylesheet" href="../../../assets/css/pages.css" />
+  <style>
+    .page-wrap { max-width: 880px; }
+
+    .steps-block {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px 24px;
+      margin-top: 16px;
+    }
+    .steps-block-title {
+      font-family: var(--font-display);
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 14px;
+      font-variation-settings: 'opsz' 18, 'SOFT' 30;
+    }
+    .steps-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      counter-reset: step;
+    }
+    .steps-list li {
+      position: relative;
+      padding-left: 32px;
+      margin-bottom: 12px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+    .steps-list li::before {
+      counter-increment: step;
+      content: counter(step);
+      position: absolute;
+      left: 0; top: 1px;
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      background: var(--accent-dim);
+      color: var(--accent);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .steps-list li:last-child { margin-bottom: 0; }
+    .steps-list code {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      background: var(--accent-dim);
+      color: var(--accent);
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+    .steps-list a {
+      color: var(--accent);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.15s;
+    }
+    .steps-list a:hover { border-bottom-color: var(--accent); }
+
+    @media (max-width: 640px) {
+      .steps-block { padding: 16px 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-wrap">
+    <header class="page-header">
+      <a href="../../../index.html" class="page-back">返回首页</a>
+      <div class="page-eyebrow">Chromium · Resources</div>
+      <h1 class="page-title">WebView <em>升核测试</em></h1>
+      <p class="page-subtitle">基准测试 · 测试方案 · 升核资源</p>
+    </header>
+
+    <div class="tab-bar">
+      <a class="tab-btn" href="./webview_benchmarks.html">基准测试</a>
+      <a class="tab-btn" href="./webview_test_plan.html">测试方案</a>
+      <a class="tab-btn active" href="./webview_resources.html">升核资源</a>
+    </div>
+
+    <section class="p-section">
+      <h2 class="p-section-title">源码与下载<span class="sect-num">01</span></h2>
+      <div class="p-divider"></div>
+      <div class="benchmark-grid">
+        <div class="bm-card">
+          <div class="bm-header">
+            <h3 class="bm-title">Chromium 源码</h3>
+            <a href="https://source.chromium.org/chromium" target="_blank" class="bm-url">OPEN &nearr;</a>
+          </div>
+          <div class="bm-desc">Chromium Code Search — 在线浏览 / 搜索完整源码树</div>
+          <div class="bm-usecase">快速定位代码路径、查看 blame、跨版本 diff</div>
+        </div>
+        <div class="bm-card">
+          <div class="bm-header">
+            <h3 class="bm-title">depot_tools</h3>
+            <a href="https://commondatastorage.googleapis.com/chrome-infra-docs/flat/depot_tools/docs/html/depot_tools_tutorial.html" target="_blank" class="bm-url">DOCS &nearr;</a>
+          </div>
+          <div class="bm-desc">Google 官方源码管理工具链（gclient / fetch / gn）</div>
+          <div class="bm-usecase">拉取源码、同步依赖、管理分支的必备工具</div>
+        </div>
+        <div class="bm-card">
+          <div class="bm-header">
+            <h3 class="bm-title">Chromium Git Repos</h3>
+            <a href="https://chromium.googlesource.com/" target="_blank" class="bm-url">REPO &nearr;</a>
+          </div>
+          <div class="bm-desc">官方 Git 仓库索引（chromium/src、v8、skia 等）</div>
+          <div class="bm-usecase">直接 clone 或浏览指定版本 tag / branch</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="p-section">
+      <h2 class="p-section-title">编译与构建<span class="sect-num">02</span></h2>
+      <div class="p-divider"></div>
+      <div class="benchmark-grid">
+        <div class="bm-card">
+          <div class="bm-header">
+            <h3 class="bm-title">Android 编译指南</h3>
+            <a href="https://chromium.googlesource.com/chromium/src/+/main/docs/android_build_instructions.md" target="_blank" class="bm-url">DOCS &nearr;</a>
+          </div>
+          <div class="bm-desc">官方 Android 平台构建步骤（环境准备 → gn → ninja）</div>
+          <div class="bm-usecase">从零搭建编译环境、生成 WebView APK</div>
+        </div>
+        <div class="bm-card">
+          <div class="bm-header">
+            <h3 class="bm-title">GN 参考</h3>
+            <a href="https://gn.googlesource.com/gn/+/main/docs/reference.md" target="_blank" class="bm-url">DOCS &nearr;</a>
+          </div>
+          <div class="bm-desc">GN 构建系统完整语法参考与内置函数文档</div>
+          <div class="bm-usecase">自定义编译参数、裁剪模块、调整 feature flags</div>
+        </div>
+        <div class="bm-card">
+          <div class="bm-header">
+            <h3 class="bm-title">获取源码 &amp; 编译流程</h3>
+            <a href="https://chromium.googlesource.com/chromium/src/+/main/docs/get_the_code.md" target="_blank" class="bm-url">DOCS &nearr;</a>
+          </div>
+          <div class="bm-desc">通用编译流程：fetch → gclient sync → gn gen → autoninja</div>
+          <div class="bm-usecase">首次拉码全流程、切分支、增量编译</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="p-section">
+      <h2 class="p-section-title">版本发布与产物<span class="sect-num">03</span></h2>
+      <div class="p-divider"></div>
+      <div class="benchmark-grid">
+        <div class="bm-card">
+          <div class="bm-header">
+            <h3 class="bm-title">Chromium Dash</h3>
+            <a href="https://chromiumdash.appspot.com/releases" target="_blank" class="bm-url">OPEN &nearr;</a>
+          </div>
+          <div class="bm-desc">各平台各 Channel 的发布版本号 / 日期 / 里程碑一览</div>
+          <div class="bm-usecase">确认目标版本发布状态、对齐上游进度</div>
+        </div>
+        <div class="bm-card">
+          <div class="bm-header">
+            <h3 class="bm-title">Version History API</h3>
+            <a href="https://versionhistory.googleapis.com/v1/chrome/platforms/all/channels/all/versions" target="_blank" class="bm-url">API &nearr;</a>
+          </div>
+          <div class="bm-desc">Google 官方版本历史 REST API — 查询任意平台 / Channel 的精确版本号</div>
+          <div class="bm-usecase">替代已下线的 OmahaProxy；可编程查询 Stable/Beta/Dev 当前版本</div>
+        </div>
+        <div class="bm-card">
+          <div class="bm-header">
+            <h3 class="bm-title">编译产物快照</h3>
+            <a href="https://commondatastorage.googleapis.com/chromium-browser-snapshots/index.html" target="_blank" class="bm-url">DOWNLOAD &nearr;</a>
+          </div>
+          <div class="bm-desc">按 commit position 下载各平台编译产物快照（zip）</div>
+          <div class="bm-usecase">快速获取指定版本可执行文件 / WebView shell APK（详见下方指南）</div>
+        </div>
+        <div class="bm-card">
+          <div class="bm-header">
+            <h3 class="bm-title">Chrome Release Blog</h3>
+            <a href="https://chromereleases.googleblog.com/" target="_blank" class="bm-url">BLOG &nearr;</a>
+          </div>
+          <div class="bm-desc">官方发布公告（Stable/Beta Channel 更新、安全修复列表）</div>
+          <div class="bm-usecase">跟踪安全补丁、了解各版本 CVE 修复情况</div>
+        </div>
+      </div>
+
+      <div class="steps-block">
+        <div class="steps-block-title">如何按内核版本下载编译产物</div>
+        <ol class="steps-list">
+          <li>打开 <a href="https://chromiumdash.appspot.com/releases?platform=Android" target="_blank">Chromium Dash → Releases (Android)</a>，找到目标版本号（如 <code>141.0.7359.0</code>）</li>
+          <li>点击版本号进入详情页，记录 <strong>Chromium Commit Position</strong>（如 <code>1456789</code>）</li>
+          <li>或直接用 API 查询：<code>https://chromiumdash.appspot.com/fetch_releases?channel=Stable&platform=Android&num=10</code>，响应中 <code>chromium_main_branch_position</code> 即为 commit position</li>
+          <li>打开 <a href="https://commondatastorage.googleapis.com/chromium-browser-snapshots/index.html" target="_blank">编译产物快照</a>，选择平台目录（Android → <code>Android/</code>）</li>
+          <li>在搜索框输入 commit position 数字，进入对应目录下载 <code>chrome-android.zip</code> 或 <code>system_webview_google-x86.apk</code></li>
+          <li>若精确 position 不存在，取最近的可用 position（通常 ±1~3 范围内有快照）</li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="p-section">
+      <h2 class="p-section-title">变更追踪与 Issue<span class="sect-num">04</span></h2>
+      <div class="p-divider"></div>
+      <div class="benchmark-grid">
+        <div class="bm-card">
+          <div class="bm-header">
+            <h3 class="bm-title">Chromium Gerrit</h3>
+            <a href="https://chromium-review.googlesource.com/" target="_blank" class="bm-url">OPEN &nearr;</a>
+          </div>
+          <div class="bm-desc">Code Review 系统 — 查看 CL（Change List）/ 合入记录</div>
+          <div class="bm-usecase">追踪上游 patch、Cherry-pick 定位、review 历史</div>
+        </div>
+        <div class="bm-card">
+          <div class="bm-header">
+            <h3 class="bm-title">Chromium Issues</h3>
+            <a href="https://issues.chromium.org/" target="_blank" class="bm-url">OPEN &nearr;</a>
+          </div>
+          <div class="bm-desc">Bug 跟踪系统（原 crbug.com 迁移至新平台）</div>
+          <div class="bm-usecase">搜索已知问题、确认 regression 是否已修复、提交 bug</div>
+        </div>
+        <div class="bm-card">
+          <div class="bm-header">
+            <h3 class="bm-title">Feature Status</h3>
+            <a href="https://chromestatus.com/features" target="_blank" class="bm-url">OPEN &nearr;</a>
+          </div>
+          <div class="bm-desc">Web Platform 新特性状态追踪（Intent to Ship / Experiment）</div>
+          <div class="bm-usecase">了解新 API 何时进入 Stable、是否需要 flag 开启</div>
+        </div>
+        <div class="bm-card">
+          <div class="bm-header">
+            <h3 class="bm-title">Chromium Dash Commits</h3>
+            <a href="https://chromiumdash.appspot.com/commits" target="_blank" class="bm-url">OPEN &nearr;</a>
+          </div>
+          <div class="bm-desc">按版本区间查看 commit 列表、搜索特定变更</div>
+          <div class="bm-usecase">升核 diff 分析、bisect 定位回归 commit</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="p-section">
+      <h2 class="p-section-title">文档与规范<span class="sect-num">05</span></h2>
+      <div class="p-divider"></div>
+      <div class="benchmark-grid">
+        <div class="bm-card">
+          <div class="bm-header">
+            <h3 class="bm-title">Chromium Docs</h3>
+            <a href="https://chromium.googlesource.com/chromium/src/+/main/docs/" target="_blank" class="bm-url">DOCS &nearr;</a>
+          </div>
+          <div class="bm-desc">官方开发者文档目录（架构、子系统、调试技巧）</div>
+          <div class="bm-usecase">查阅内部设计文档、了解模块职责与接口</div>
+        </div>
+        <div class="bm-card">
+          <div class="bm-header">
+            <h3 class="bm-title">V8 Dev Blog</h3>
+            <a href="https://v8.dev/blog" target="_blank" class="bm-url">BLOG &nearr;</a>
+          </div>
+          <div class="bm-desc">V8 引擎官方博客 — JIT 优化、GC 改进、新语言特性支持</div>
+          <div class="bm-usecase">理解 JS 性能变化的根因、评估引擎升级影响</div>
+        </div>
+        <div class="bm-card">
+          <div class="bm-header">
+            <h3 class="bm-title">WebView 文档</h3>
+            <a href="https://chromium.googlesource.com/chromium/src/+/main/android_webview/docs/" target="_blank" class="bm-url">DOCS &nearr;</a>
+          </div>
+          <div class="bm-desc">Android WebView 子系统专属文档（架构、测试、发布）</div>
+          <div class="bm-usecase">WebView 定制开发、理解与 Chrome 的差异点</div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</body>
+</html>

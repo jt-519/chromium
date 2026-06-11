@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f4f1ea" />
+  <title>Chromium CSS 渲染测试 — dev-page</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="../../../assets/css/pages.css">
+  <style>
+    /* CSS Test Subject */
+    .demo-box {
+      width: 120px;
+      height: 120px;
+      border: 1px solid rgba(245, 166, 35, 0.3);
+      display: inline-block;
+      position: relative;
+      border-radius: 4px;
+    }
+
+    .demo-box::after {
+      content: "";
+      position: absolute;
+      width: 0;
+      height: 0;
+      left: 20%;
+      top: 20%;
+      border-style: solid;
+      border-color: #db2424 #972424 #a96b6b #4d9fff;
+      border-width: 40px 40px 40px 40px;
+    }
+
+    .demo-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--text-muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-top: 16px;
+      text-align: center;
+    }
+
+    .demo-note {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      padding: 12px 14px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      margin-top: 14px;
+    }
+
+    .color-squares {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+
+    .color-sq {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      position: relative;
+      cursor: default;
+    }
+
+    .color-sq .color-label {
+      position: absolute;
+      bottom: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="page-wrap">
+    <header class="page-header">
+      <a href="../../../index.html" class="page-back">返回导航首页</a>
+      <div class="page-eyebrow">Chromium · CSS Test</div>
+      <h1 class="page-title">CSS <em>渲染</em>测试</h1>
+      <p class="page-subtitle">border-style / ::after 伪元素等样式渲染验证</p>
+    </header>
+
+    <!-- border-color 四色测试 -->
+    <div class="p-section">
+      <div class="p-section-title">Border Color 四方向渲染</div>
+      <div class="p-divider"></div>
+      <div class="p-card">
+        <div class="p-demo-area" style="flex-direction: column; gap: 0;">
+          <div class="demo-box"></div>
+          <div class="demo-label">::after · border-color 四方向</div>
+        </div>
+        <div class="demo-note">
+          验证 <code style="color:var(--teal)">border-color: top right bottom left</code>
+          四个方向独立渲染是否正常。注意：<code style="color:var(--accent)">border-color</code> 必须配合 <code style="color:var(--accent)">border-style</code> 使用。
+        </div>
+      </div>
+    </div>
+
+    <!-- Border Style 枚举 -->
+    <div class="p-section">
+      <div class="p-section-title">Border Style 样式枚举</div>
+      <div class="p-divider"></div>
+      <div class="p-card">
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px;">
+          <div style="text-align:center;">
+            <div style="width:100%; height:0; border-top:3px solid var(--accent); margin:12px 0 4px;"></div>
+            <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted)">solid</span>
+          </div>
+          <div style="text-align:center;">
+            <div style="width:100%; height:0; border-top:3px dashed var(--teal); margin:12px 0 4px;"></div>
+            <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted)">dashed</span>
+          </div>
+          <div style="text-align:center;">
+            <div style="width:100%; height:0; border-top:3px dotted var(--blue); margin:12px 0 4px;"></div>
+            <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted)">dotted</span>
+          </div>
+          <div style="text-align:center;">
+            <div style="width:100%; height:0; border-top:4px double var(--violet); margin:12px 0 4px;"></div>
+            <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted)">double</span>
+          </div>
+          <div style="text-align:center;">
+            <div style="width:100%; height:6px; border-top:6px groove var(--pink); margin:8px 0 4px;"></div>
+            <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted)">groove</span>
+          </div>
+          <div style="text-align:center;">
+            <div style="width:100%; height:6px; border-top:6px ridge var(--green); margin:8px 0 4px;"></div>
+            <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted)">ridge</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Topics API -->
+    <div class="p-section">
+      <div class="p-section-title">Topics API 测试</div>
+      <div class="p-divider"></div>
+      <div class="p-card">
+        <button class="p-btn p-btn-accent" style="max-width:240px;" onclick="enableFeature()">
+          requestPermission('browsing-topics')
+        </button>
+        <div id="topicsResult" style="margin-top:12px; font-family:var(--font-mono); font-size:11px; color:var(--text-secondary);"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const enableFeature = async () => {
+      const el = document.getElementById('topicsResult');
+      try {
+        if (document.featurePolicy && document.featurePolicy.requestPermission) {
+          await document.featurePolicy.requestPermission('browsing-topics');
+          el.textContent = '✓ requestPermission 调用成功';
+          el.style.color = 'var(--green)';
+        } else {
+          el.textContent = '⚠ document.featurePolicy 不可用 (当前环境不支持)';
+          el.style.color = 'var(--accent)';
+        }
+      } catch(e) {
+        el.textContent = '✗ ' + e.message;
+        el.style.color = 'var(--red)';
+      }
+    };
+  </script>
+
+  <!-- QR Code Button -->
+  <button class="qr-btn" aria-label="Show QR code"></button>
+  <script src="../../../assets/js/qrcode.js"></script>
+
+</body>
+</html>

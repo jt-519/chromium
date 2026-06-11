@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#f4f1ea" />
+  <title>WebView 内核差异分析 | Chromium Upgrade Diff</title>
+  <link rel="stylesheet" href="../../../assets/css/pages.css" />
+  <style>
+    .page-wrap { max-width: 980px; margin: 0 auto; padding: 40px 20px; }
+
+    /* Header adjustments */
+    .page-header { margin-bottom: 24px; }
+    .range-tab {
+      padding: 7px 14px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--bg-card);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .range-tab:hover { border-color: var(--accent-border); color: var(--accent); }
+    .range-tab.active { background: var(--accent-dim); border-color: var(--accent-border); color: var(--accent); }
+
+    /* Risk Summary Bar */
+    .risk-summary-bar {
+      display: flex;
+      gap: 16px;
+      padding: 16px 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      margin-bottom: 24px;
+      box-shadow: var(--shadow-sm);
+    }
+    .risk-stat {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .risk-stat span.high-count { color: var(--red); }
+    .risk-stat span.medium-count { color: var(--accent); }
+    .risk-stat span.low-count { color: var(--teal); }
+    .risk-stat::before {
+      content: '';
+      display: block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+    .risk-stat.high::before { background: var(--red); }
+    .risk-stat.medium::before { background: var(--accent); }
+    .risk-stat.low::before { background: var(--teal); }
+
+    /* Filter Pills */
+    .filter-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+    .filter-pill {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      padding: 6px 16px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .filter-pill:hover {
+      border-color: var(--accent-border);
+      color: var(--text);
+    }
+    .filter-pill.active {
+      background: var(--accent-dim);
+      border-color: var(--accent-border);
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* Diff List */
+    .diff-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 40px;
+    }
+
+    /* Flat Diff Item Row */
+    .diff-item {
+      display: flex;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      gap: 16px;
+      transition: box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+    .diff-item:hover {
+      box-shadow: var(--shadow-sm);
+      border-color: var(--border-hover, #ccc);
+    }
+
+    /* Left: Impact Badge */
+    .diff-impact-col {
+      flex: 0 0 80px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .impact-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .impact-badge.high {
+      color: var(--red);
+      background: rgba(168, 51, 46, 0.08);
+      border: 1px solid rgba(168, 51, 46, 0.18);
+    }
+    .impact-badge.medium {
+      color: var(--accent);
+      background: var(--accent-dim);
+      border: 1px solid var(--accent-border);
+    }
+    .impact-badge.low {
+      color: var(--teal);
+      background: rgba(45, 110, 99, 0.08);
+      border: 1px solid rgba(45, 110, 99, 0.18);
+    }
+
+    /* Middle: Content */
+    .diff-content-col {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+    .diff-header-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+      flex-wrap: wrap;
+    }
+    .diff-title {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.3;
+    }
+    .milestone-badge {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent);
+      background: var(--accent-dim);
+      border: 1px solid var(--accent-border);
+      padding: 2px 8px;
+      border-radius: 4px;
+      letter-spacing: 0.03em;
+      white-space: nowrap;
+    }
+    .diff-scope {
+      font-size: 13px;
+      color: var(--text);
+      margin-bottom: 4px;
+      font-weight: 500;
+    }
+    .diff-why {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      margin-bottom: 12px;
+    }
+    .diff-source {
+      display: inline-flex;
+      font-size: 12px;
+      color: var(--text-muted);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: all 0.2s;
+    }
+    .diff-source:hover {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    /* Right: Verification */
+    .diff-verify-col {
+      flex: 0 0 140px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+    }
+    .verify-btn {
+      position: relative;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent);
+      background: var(--accent-dim);
+      border: 1px solid var(--accent-border);
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      cursor: help;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .verify-btn::after {
+      content: "ⓘ";
+      font-size: 10px;
+      opacity: 0.7;
+    }
+    /* Tooltip */
+    .verify-tooltip {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      width: 260px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-4px);
+      transition: all 0.2s ease;
+      z-index: 10;
+      text-align: left;
+      font-weight: normal;
+    }
+    .verify-btn:hover .verify-tooltip {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    /* Bottom section */
+    .checklist-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    .checklist-title {
+      font-family: var(--font-display);
+      font-size: 20px;
+      color: var(--text);
+      margin-top: 0;
+      margin-bottom: 16px;
+    }
+    .kud-checklist {
+      margin: 0;
+      padding-left: 20px;
+    }
+    .kud-checklist li {
+      margin-bottom: 10px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      font-size: 14px;
+    }
+
+    /* Range Summary */
+    .summary-section {
+      margin-top: 36px;
+      margin-bottom: 36px;
+    }
+    .summary-title {
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 14px;
+      letter-spacing: -0.02em;
+    }
+    .summary-body {
+      font-size: 13.5px;
+      color: var(--text-secondary);
+      line-height: 1.85;
+      padding: 16px 18px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+      box-shadow: var(--shadow-sm);
+    }
+    .summary-body p + p { margin-top: 10px; }
+    .summary-body strong { color: var(--text); }
+    .summary-body .s-icon {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      vertical-align: -2px;
+      margin-right: 6px;
+      flex-shrink: 0;
+    }
+    .summary-body .s-icon svg { width: 100%; height: 100%; }
+
+    /* Footer links */
+    .footer-links {
+      display: flex;
+      gap: 16px;
+      margin-top: 40px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+    }
+    .footer-link {
+      display: inline-flex;
+      align-items: center;
+      padding: 10px 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg-surface);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .footer-link:hover {
+      border-color: var(--accent-border);
+      background: var(--accent-dim);
+      color: var(--accent);
+    }
+
+    @media (max-width: 720px) {
+      .diff-item {
+        flex-direction: column;
+        gap: 12px;
+      }
+      .diff-impact-col { flex: auto; flex-direction: row; align-items: center; justify-content: space-between; }
+      .diff-verify-col { flex: auto; align-items: flex-start; margin-top: 8px; }
+      .verify-tooltip { right: auto; left: 0; }
+      .risk-summary-bar { flex-direction: column; gap: 8px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-wrap">
+    <header class="page-header">
+      <a href="../../../index.html" class="page-back">&larr; 返回首页</a>
+      <h1 class="page-title">WebView 内核差异分析</h1>
+      <div style="display:flex;gap:6px;margin-top:12px;">
+        <button class="range-tab active" data-range="124-141">M124 &rarr; M141</button>
+        <button class="range-tab" data-range="141-149">M141 &rarr; M149</button>
+      </div>
+    </header>
+
+    <div class="risk-summary-bar" id="riskSummary">
+      <!-- Injected via JS -->
+    </div>
+
+    <div class="filter-pills" id="filterPills">
+      <button class="filter-pill active" data-filter="all">All Changes</button>
+      <button class="filter-pill" data-filter="breaking">Breaking</button>
+      <button class="filter-pill" data-filter="security">Security</button>
+      <button class="filter-pill" data-filter="webview">WebView</button>
+      <button class="filter-pill" data-filter="capabilities">Capabilities</button>
+      <button class="filter-pill" data-filter="runtime">Runtime</button>
+    </div>
+
+    <div class="diff-list" id="diffList">
+      <!-- Injected via JS -->
+    </div>
+
+    <section class="summary-section" id="rangeSummary">
+      <!-- Injected via JS -->
+    </section>
+
+    <section class="checklist-section">
+      <h2 class="checklist-title">回归验证重点 (Regression Checklist)</h2>
+      <ol class="kud-checklist" id="checklistList"></ol>
+    </section>
+
+    <div class="footer-links">
+      <a href="./kernel_changelog.html" class="footer-link">查看详细版本变更记录 &nearr;</a>
+      <a href="../benchmarks/webview_test_plan.html" class="footer-link">查看完整测试方案 &nearr;</a>
+    </div>
+  </div>
+
+  <script>
+    // SVG 图标常量，避免 summary 中重复内联大段 SVG
+    const ICON = {
+      breaking: '<span class="s-icon"><svg viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></span>',
+      security: '<span class="s-icon"><svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>',
+      webview: '<span class="s-icon"><svg viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></span>',
+      added: '<span class="s-icon"><svg viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>',
+      removed: '<span class="s-icon"><svg viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></span>',
+      runtime: '<span class="s-icon"><svg viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span>'
+    };
+
+    const ranges = {
+      '124-141': {
+        from: 'M124', to: 'M141',
+        summary: '<p><strong>本次升核跨越 18 个 milestone（2024-04 → 2025-09），是一次大版本跃迁。</strong></p>' +
+          '<p>' + ICON.breaking + '<strong>Breaking：</strong>Mutation Events 彻底移除（M127→M135 完成）、JSON import assert 语法废弃（M126）、MSE 非标用法开始抛异常（M138）——三项都可能导致线上静默失效。</p>' +
+          '<p>' + ICON.security + '<strong>Security / Privacy：</strong>Storage Access API 收紧为同源（M141）、:visited 历史分区（M136）、私网 / 局域网访问从 M127 起持续收紧到 M141 权限弹窗——登录态、内网通信、链接样式都受影响。</p>' +
+          '<p>' + ICON.webview + '<strong>WebView 特有：</strong>CHIPS 在 M128-M130 间先关后开、File System Access 在 M132 进入 WebView、X-Requested-With 移除最终取消（M138）——宿主侧 Cookie 和 Header 行为需要专项验证。</p>' +
+          '<p>' + ICON.added + '<strong>新增能力（重点）：</strong>CSS Anchor Positioning（M125）· 跨文档视图过渡（M126）· File System Access → WebView（M132）· moveBefore DOM 状态保持移动（M133）· CSS @function / if()（M137-M139）· fetchLater（M135）· 本地 AI API（M138）· IndexedDB getAllRecords（M141）· WebRTC HEVC（M136）· scheduler.yield（M129）</p>' +
+          '<p>' + ICON.removed + '<strong>移除 / 废弃（重点）：</strong>Mutation Events（M127→M135）· import assert 语法（M126）· webkit 前缀全屏 API（M132）· CSS :--foo 旧语法（M127）· getInnerHTML / includeShadowRoots（M129）· MSE 非标 abort/duration（M138）· 私网非安全上下文访问（M127-M141）· WebGL SwiftShader 降级（M139）· Purpose:prefetch 头（M140）</p>' +
+          '<p>' + ICON.runtime + '<strong>Runtime：</strong>responseStart 语义变更（M133）影响埋点口径、HEVC WebRTC（M136）和 MediaRecorder 扩展影响音视频链路。</p>',
+        items: [
+          { category: 'breaking', title: 'Mutation Events disabled by default', milestone: '127', impact: 'high', scope: 'Legacy DOM listeners / old widget libraries', why: 'Mutation Events 自 M127 起默认停用，老旧 DOM 插件若仍监听 DOMNodeInserted、DOMSubtreeModified 等事件，会出现静默失效。', validate: '回归所有依赖 DOM 自动感知的旧组件，确认是否已改用 MutationObserver。', source: 'https://developer.chrome.com/release-notes/127' },
+          { category: 'breaking', title: 'JSON module import assert syntax removed', milestone: '126', impact: 'high', scope: 'ESM loaders / build outputs / JSON imports', why: '旧写法 import assert { type: "json" } 改为 with 语法，不兼容代码直接抛 SyntaxError。', validate: '扫描前端仓库和动态加载片段，确认 JSON 模块导入语法是否仍使用 assert。', source: 'https://developer.chrome.com/release-notes/126' },
+          { category: 'breaking', title: 'MSE abort and duration semantics changed', milestone: '138', impact: 'high', scope: 'Streaming player / custom MSE buffering', why: 'M138 中 SourceBuffer.abort() 与 MediaSource.duration 的非标用法开始抛异常。', validate: '重点回归 H5 视频、直播、短视频，观察 seek、切码率、前后台切换后的缓冲恢复。', source: 'https://developer.chrome.com/release-notes/138' },
+          { category: 'security', title: 'Storage Access API tightened to same-origin', milestone: '141', impact: 'high', scope: 'Iframe auth / embedded account systems', why: 'Storage Access API 在 M141 起按严格 same-origin 处理，跨子域嵌入鉴权流可能失效。', validate: '回归登录态透传、三方嵌入页、支付或账号中心 iframe。', source: 'https://developer.chrome.com/release-notes/141' },
+          { category: 'security', title: 'Private/local network access restrictions', milestone: '127-141', impact: 'high', scope: 'LAN access / enterprise intranet / debug panels', why: '从 M127 到 M141，私网子资源和局域网访问持续收紧。', validate: '测试 http 页面访问内网接口、路由器、同网段设备和 localhost 类地址。', source: 'https://developer.chrome.com/release-notes/141' },
+          { category: 'security', title: ':visited history partitioning', milestone: '136', impact: 'medium', scope: 'History UI / content recommendation styling', why: ':visited 不再反映全局浏览历史，按顶级站点上下文分区。', validate: '检查目录页、推荐列表等是否还把 :visited 当成全局阅读状态。', source: 'https://developer.chrome.com/release-notes/136' },
+          { category: 'webview', title: 'CHIPS temporarily disabled then restored', milestone: '128-130', impact: 'high', scope: 'CookieManager / shouldInterceptRequest / partitioned cookies', why: 'WebView 在 M128-M130 间关闭 CHIPS，M130 恢复。同一登录链路在不同内核壳上 cookie 行为不一致。', validate: '回归分区 cookie、重定向登录、shouldInterceptRequest 观测值。', source: 'https://groups.google.com/a/chromium.org/g/blink-dev/c/_hHg5MASz4s' },
+          { category: 'webview', title: 'File System Access API reached WebView', milestone: '132', impact: 'medium', scope: 'H5 file workflows / editor / upload staging', why: 'M132 起 File System Access API 进入 WebView，旧降级分支需重新审视。', validate: '检查富文本编辑器、文件导入导出是否需重走能力检测。', source: 'https://developer.chrome.com/release-notes/132' },
+          { category: 'webview', title: 'X-Requested-With removal canceled', milestone: '138', impact: 'medium', scope: 'Server UA heuristics / Android WebKit integration', why: '最终未移除默认 header，但历史兼容分支需清理。', validate: '核对服务端白名单、AndroidX WebKit 兼容层。', source: 'https://developer.android.com/jetpack/androidx/releases/webkit' },
+          { category: 'capabilities', title: 'On-device AI APIs entered platform', milestone: '138', impact: 'low', scope: 'Translator / Summarizer exploration', why: 'M138 出现本地 AI 能力，对后续设计有参考价值。', validate: '只在有产品需求时做 capability detect。', source: 'https://developer.chrome.com/release-notes/138' },
+          { category: 'capabilities', title: 'IndexedDB batch read improved', milestone: '141', impact: 'low', scope: 'Offline cache / local data stores', why: 'getAllRecords() 替代手写 cursor 循环。', validate: '评估是否逐步替换 cursor 遍历。', source: 'https://developer.chrome.com/release-notes/141' },
+          { category: 'runtime', title: 'responseStart semantics shifted', milestone: '133', impact: 'medium', scope: 'TTFB dashboards / web perf analytics', why: 'M133 对 responseStart 语义调整影响性能报表可比性。', validate: '核对埋点口径，引入 firstResponseHeadersStart 或版本标记。', source: 'https://developer.chrome.com/release-notes/133' },
+          { category: 'runtime', title: 'MediaRecorder/WebRTC codec expanded', milestone: '136-141', impact: 'medium', scope: 'Audio/video capture / RTC scenes', why: 'HEVC、Encoded Transform 新能力可能暴露设备兼容差异。', validate: '回归录音录屏、RTC 通话、推流录制。', source: 'https://developer.chrome.com/release-notes/141' }
+        ],
+        checklist: [
+          '检查历史前端代码和三方库，确认没有继续依赖 Mutation Events 或 JSON module assert 旧语法。',
+          '在真实 WebView 壳中回归 Cookie、分区 Cookie、登录重定向和 shouldInterceptRequest 观测值。',
+          '验证 iframe 登录态、嵌入式账号页、支付中间页在 Storage Access API 收紧后的行为。',
+          '专项测试局域网访问、内网接口调用、设备发现页和调试面板的 secure context / 权限依赖。',
+          '重新走一遍 H5 视频、直播、短视频的 seek/切码率路径，确认 MSE 异常未被吞掉。',
+          '确认历史访问态和推荐列表没有把 :visited 继续当成全局已读状态。',
+          '如业务依赖本地文件能力、RTC 或录屏录音，补充新能力和设备兼容差异的专项覆盖。'
+        ]
+      },
+      '141-149': {
+        from: 'M141', to: 'M149',
+        summary: '<p><strong>本次升核跨越 8 个 milestone（2025-09 → 2026-06），节奏更快、变化密度高。</strong></p>' +
+          '<p>' + ICON.breaking + '<strong>Breaking：</strong>Shared Storage / Private Aggregation 双双移除（M144）、XSLT 开始废弃（M143）、UA 字符串精简为低熵格式（M145）——服务端 UA 解析和广告归因受影响最大。</p>' +
+          '<p>' + ICON.security + '<strong>Security：</strong>局域网访问升级为强制权限（M142+）、Device Bound Session Credentials（M145）绑定设备硬件——登录安全增强但多设备调试受限。</p>' +
+          '<p>' + ICON.added + '<strong>新能力：</strong>Temporal API（M144）替代 Date、Scroll-triggered Animations（M146）纯 CSS 滚动动画、Scoped Custom Element Registry（M146）解决微前端命名冲突。</p>' +
+          '<p>' + ICON.webview + '<strong>WebView 特有：</strong>WebGPU Compatibility Mode（M146）让旧设备也能跑 WebGPU、video/audio loading=lazy（M148）。</p>' +
+          '<p>' + ICON.runtime + '<strong>Runtime：</strong>ICU 77 / Unicode 16（M143）文本渲染可能变化、WebRTC RTP 扩展协商调整（M143）。</p>',
+        items: [
+          { category: 'breaking', title: 'Shared Storage API removed', milestone: '144', impact: 'high', scope: 'Cross-site data sharing / attribution', why: 'Shared Storage API 彻底移除，依赖它做跨站数据共享的方案失效。', validate: '排查是否有业务使用 SharedStorage 接口，迁移到替代方案。', source: 'https://developer.chrome.com/release-notes/144' },
+          { category: 'breaking', title: 'Private Aggregation API removed', milestone: '144', impact: 'high', scope: 'Privacy-preserving analytics', why: '隐私聚合报告能力移除，广告归因和隐私统计需寻找替代。', validate: '确认广告 SDK 和归因逻辑是否依赖此 API。', source: 'https://developer.chrome.com/release-notes/144' },
+          { category: 'breaking', title: 'XSLT deprecation started', milestone: '143', impact: 'high', scope: 'XML transform rendering', why: 'XSLT 因安全风险和低使用率开始废弃，依赖 XSLT 展示的老系统需迁移。', validate: '排查项目中是否有 XSLT 文件或 xsl:transform 引用。', source: 'https://developer.chrome.com/release-notes/143' },
+          { category: 'breaking', title: 'Reduced User-Agent strings by default', milestone: '145', impact: 'high', scope: 'Server-side UA parsing / device detection', why: 'UA 精简为低熵格式，依赖完整 UA 的服务端分流逻辑可能失效。', validate: '检查所有 UA 解析代码，迁移到 User-Agent Client Hints。', source: 'https://developer.chrome.com/release-notes/145' },
+          { category: 'security', title: 'Local Network Access requires permission', milestone: '142', impact: 'high', scope: 'LAN devices / intranet / debug panels', why: '私网访问从警告升级为强制权限，未授权请求直接拒绝。', validate: '所有访问局域网设备的 H5 页面必须适配权限流程。', source: 'https://developer.chrome.com/release-notes/142' },
+          { category: 'security', title: 'Device Bound Session Credentials', milestone: '145', impact: 'high', scope: 'Session security / cookie theft protection', why: '会话绑定设备硬件密钥，被盗 cookie 无法跨设备重放。', validate: '验证多设备登录、cookie 同步、调试环境是否受影响。', source: 'https://developer.chrome.com/release-notes/145' },
+          { category: 'security', title: 'AccentColor restricted to web app context', milestone: '149', impact: 'medium', scope: 'Fingerprinting / theme customization', why: '系统强调色 CSS 关键字仅 PWA 可用，普通网页无法探测系统配色。', validate: '依赖系统色变量做主题跟随的 H5 页面需改用 CSS 自定义属性回退。', source: 'https://developer.chrome.com/release-notes/149' },
+          { category: 'capabilities', title: 'Temporal API stable', milestone: '144', impact: 'high', scope: 'Date/time handling / all JS code', why: '全新日期时间 API 进入 stable，行为与 Date / Moment.js / dayjs 不同。', validate: '检查 polyfill 冲突，评估是否逐步替换 Date 用法。', source: 'https://developer.chrome.com/release-notes/144' },
+          { category: 'capabilities', title: 'Scroll-triggered Animations stable', milestone: '146', impact: 'high', scope: 'Scroll-based animations / IntersectionObserver', why: 'CSS 滚动位置声明式触发动画，大量 JS scroll 监听可改为纯 CSS。', validate: '评估现有 JS 滚动动画方案是否需要迁移或共存。', source: 'https://developer.chrome.com/release-notes/146' },
+          { category: 'capabilities', title: 'Scoped Custom Element Registry', milestone: '146', impact: 'medium', scope: 'Micro-frontends / web components', why: '同一 tag name 可在不同 scope 注册不同定义，解决命名冲突。', validate: '微前端和多 H5 模块 WebView 场景评估使用。', source: 'https://developer.chrome.com/release-notes/146' },
+          { category: 'capabilities', title: 'video/audio loading="lazy"', milestone: '148', impact: 'medium', scope: 'Media loading / performance', why: '媒体元素懒加载进入 stable，首屏不在视口的视频不再立刻拉流。', validate: '检查自动播放策略与 lazy loading 的交互。', source: 'https://developer.chrome.com/release-notes/148' },
+          { category: 'runtime', title: 'WebRTC RTP header extension change', milestone: '143', impact: 'medium', scope: 'Custom RTC solutions', why: 'RTP 扩展协商逻辑调整，自定义 RTC 方案可能需适配。', validate: '回归 RTC 通话、自定义编码管线。', source: 'https://developer.chrome.com/release-notes/143' },
+          { category: 'runtime', title: 'ICU 77 / Unicode 16 upgrade', milestone: '143', impact: 'medium', scope: 'Text rendering / emoji / CJK', why: '字符集升级，新增 emoji 和 CJK 字符，文本测量和渲染可能变化。', validate: '回归多语言页面、emoji 展示、富文本排版。', source: 'https://developer.chrome.com/release-notes/143' },
+          { category: 'webview', title: 'WebGPU Compatibility Mode', milestone: '146', impact: 'medium', scope: 'GPU rendering on older devices', why: 'WebGPU 可 fallback 到 OpenGL ES / D3D11，覆盖更多旧设备。', validate: '测试 WebGPU 内容在不支持 Vulkan 的设备上是否正常降级。', source: 'https://developer.chrome.com/release-notes/146' }
+        ],
+        checklist: [
+          '排查所有 User-Agent 解析逻辑，迁移到 User-Agent Client Hints（CH-UA）。',
+          '确认无业务依赖 Shared Storage API 或 Private Aggregation API，已迁移替代方案。',
+          '局域网访问页面（配网、内网控制台）适配权限授予流程和拒绝兜底体验。',
+          '验证 Temporal API 与现有日期库（dayjs/moment）无 polyfill 冲突。',
+          '排查 XSLT 使用，规划迁移时间线。',
+          '回归 WebRTC / 音视频场景，验证 RTP 扩展和 Unicode 16 升级后的表现。',
+          '评估 Scroll-triggered Animations 是否可替代现有 JS 滚动动画方案。',
+          '多设备登录和调试环境验证 Device Bound Session Credentials 影响。'
+        ]
+      }
+    };
+
+    var currentRange = '124-141';
+    var currentFilter = 'all';
+    const impactWeight = { 'high': 3, 'medium': 2, 'low': 1 };
+
+    function getData() { return ranges[currentRange]; }
+
+    function renderRiskSummary() {
+      var counts = { high: 0, medium: 0, low: 0 };
+      getData().items.forEach(function(item) { counts[item.impact]++; });
+      document.getElementById('riskSummary').innerHTML =
+        '<div class="risk-stat"><span class="high-count">' + counts.high + '</span> High Risk</div>' +
+        '<div class="risk-stat"><span class="medium-count">' + counts.medium + '</span> Medium</div>' +
+        '<div class="risk-stat"><span class="low-count">' + counts.low + '</span> Low</div>';
+    }
+
+    function renderDiffList() {
+      var container = document.getElementById('diffList');
+      var items = getData().items.slice().sort(function(a, b) { return impactWeight[b.impact] - impactWeight[a.impact]; });
+      if (currentFilter !== 'all') items = items.filter(function(item) { return item.category === currentFilter; });
+      if (items.length === 0) { container.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);">No items found.</div>'; return; }
+      container.innerHTML = items.map(function(item) {
+        return '<div class="diff-item"><div class="diff-impact-col"><span class="impact-badge ' + item.impact + '">' + item.impact.toUpperCase() + '</span></div><div class="diff-content-col"><div class="diff-header-row"><h3 class="diff-title">' + item.title + '</h3><span class="milestone-badge">M' + item.milestone + '</span></div><div class="diff-scope">Scope: ' + item.scope + '</div><div class="diff-why">' + item.why + '</div><a href="' + item.source + '" class="diff-source" target="_blank" rel="noopener">Source &nearr;</a></div><div class="diff-verify-col"><div class="verify-btn">验证重点<div class="verify-tooltip">' + item.validate + '</div></div></div></div>';
+      }).join('');
+    }
+
+    function renderChecklist() {
+      document.getElementById('checklistList').innerHTML = getData().checklist.map(function(item) { return '<li>' + item + '</li>'; }).join('');
+    }
+
+    function renderSummary() {
+      var data = getData();
+      var el = document.getElementById('rangeSummary');
+      if (data.summary) {
+        el.innerHTML = '<h2 class="summary-title">' + data.from + ' → ' + data.to + ' 重大变更汇总</h2><div class="summary-body">' + data.summary + '</div>';
+        el.style.display = '';
+      } else {
+        el.style.display = 'none';
+      }
+    }
+
+    function renderAll() {
+      renderRiskSummary();
+      renderDiffList();
+      renderSummary();
+      renderChecklist();
+    }
+
+    document.querySelectorAll('.range-tab').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.range-tab').forEach(function(b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        currentRange = btn.getAttribute('data-range');
+        currentFilter = 'all';
+        document.querySelectorAll('.filter-pill').forEach(function(p) { p.classList.remove('active'); });
+        document.querySelector('.filter-pill[data-filter="all"]').classList.add('active');
+        renderAll();
+      });
+    });
+
+    document.querySelectorAll('.filter-pill').forEach(function(pill) {
+      pill.addEventListener('click', function() {
+        document.querySelectorAll('.filter-pill').forEach(function(p) { p.classList.remove('active'); });
+        pill.classList.add('active');
+        currentFilter = pill.getAttribute('data-filter');
+        renderDiffList();
+      });
+    });
+
+    renderAll();
+  </script>
+</body>
+</html>

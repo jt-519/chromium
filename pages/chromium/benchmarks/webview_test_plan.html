@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#f4f1ea" />
+  <title>升核测试方案 | WebView Benchmark Plan</title>
+  <link rel="stylesheet" href="../../../assets/css/pages.css" />
+  <style>
+    .page-wrap { max-width: 880px; }
+
+    .strategy-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 28px 32px;
+      margin-top: 48px;
+      box-shadow: var(--shadow-sm);
+    }
+    .strategy-title {
+      font-family: var(--font-display);
+      font-size: 24px;
+      font-weight: 500;
+      color: var(--text);
+      margin-bottom: 18px;
+      letter-spacing: -0.02em;
+      font-variation-settings: 'opsz' 48, 'SOFT' 30;
+    }
+    .strategy-title em { font-style: italic; color: var(--accent); }
+    .strategy-list { list-style: none; padding: 0; margin: 0 0 20px; }
+    .strategy-list li {
+      padding-left: 20px;
+      margin-bottom: 10px;
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      position: relative;
+    }
+    .strategy-list li::before {
+      content: '\2022';
+      position: absolute;
+      left: 0; top: 0;
+      color: var(--accent);
+      font-weight: 700;
+    }
+    .strategy-list strong { color: var(--text); font-weight: 600; font-family: var(--font-display); font-style: italic; font-variation-settings: 'opsz' 14, 'SOFT' 100; }
+
+    .callout {
+      border: 1px solid;
+      border-radius: var(--radius-lg);
+      padding: 14px 18px;
+      font-size: 13px;
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      line-height: 1.7;
+    }
+    .callout-icon { font-size: 14px; flex-shrink: 0; line-height: 1.7; opacity: 0.7; }
+    .callout-warn {
+      background: rgba(168, 51, 46, 0.05);
+      border-color: rgba(168, 51, 46, 0.18);
+      color: #7a2b27;
+    }
+    .callout-warn strong { color: var(--red); font-weight: 600; }
+    .callout-info {
+      background: rgba(45, 110, 99, 0.05);
+      border-color: rgba(45, 110, 99, 0.18);
+      color: #2d6e63;
+    }
+    .callout-info strong { color: var(--teal); font-weight: 700; }
+
+    .plan-phase {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      margin-bottom: 10px;
+      overflow: hidden;
+      transition: border-color 0.15s;
+    }
+    .plan-phase:hover { border-color: var(--border-strong); }
+    .phase-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 16px 20px;
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+    .phase-header:hover { background: var(--bg-card-hover); }
+    .phase-num {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--bg-card);
+      background: var(--accent);
+      width: 30px; height: 30px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      letter-spacing: 0.04em;
+    }
+    .phase-meta { flex: 1; min-width: 0; }
+    .phase-title {
+      font-family: var(--font-display);
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--text);
+      margin: 0 0 2px 0;
+      letter-spacing: -0.015em;
+      font-variation-settings: 'opsz' 24, 'SOFT' 30;
+    }
+    .phase-sub { font-size: 12px; color: var(--text-muted); }
+    .phase-toggle { font-size: 11px; color: var(--text-muted); transition: transform 0.2s; flex-shrink: 0; }
+    .plan-phase.open .phase-toggle { transform: rotate(180deg); }
+    .phase-body { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
+    .plan-phase.open .phase-body { max-height: 4000px; }
+    .phase-content { padding: 0 20px 20px 64px; }
+
+    .phase-group { margin-bottom: 18px; }
+    .phase-group:last-child { margin-bottom: 0; }
+    .phase-group-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      color: var(--teal);
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .phase-items { list-style: none; padding: 0; margin: 0; }
+    .phase-items li {
+      position: relative;
+      padding-left: 14px;
+      margin-bottom: 8px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+    .phase-items li::before {
+      content: '';
+      position: absolute;
+      left: 2px; top: 9px;
+      width: 4px; height: 4px;
+      border-radius: 50%;
+      background: var(--text-muted);
+    }
+    .phase-items strong { color: var(--text); font-weight: 600; }
+    .phase-items a, .strategy-list a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.15s; }
+    .phase-items a:hover, .strategy-list a:hover { border-bottom-color: var(--accent); }
+    .phase-items code {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      background: var(--accent-dim);
+      color: var(--accent);
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+    .phase-items .tag {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      font-weight: 600;
+      padding: 1px 6px;
+      border-radius: 3px;
+      margin-left: 4px;
+      vertical-align: middle;
+    }
+    .tag-must { background: rgba(168,51,46,0.08); color: var(--red); }
+    .tag-rec  { background: var(--accent-dim); color: var(--accent); }
+    .tag-opt  { background: rgba(45,110,99,0.07); color: var(--teal); }
+
+    .bm-detail {
+      margin-top: 10px;
+      margin-bottom: 4px;
+      padding: 12px 14px;
+      background: var(--bg-surface);
+      border-left: 2px solid var(--accent);
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    }
+    .bm-detail-grid {
+      display: grid;
+      grid-template-columns: 90px 1fr;
+      gap: 6px 14px;
+      margin-bottom: 10px;
+    }
+    .bm-detail-grid:last-child { margin-bottom: 0; }
+    .detail-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      color: var(--teal);
+      text-transform: uppercase;
+      padding-top: 2px;
+    }
+    .detail-value {
+      font-size: 12.5px;
+      color: var(--text-secondary);
+      line-height: 1.65;
+    }
+    .detail-value code {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      background: var(--accent-dim);
+      color: var(--accent);
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+    .bm-detail-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11.5px;
+      margin-top: 8px;
+    }
+    .bm-detail-table th,
+    .bm-detail-table td {
+      text-align: left;
+      padding: 5px 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .bm-detail-table th {
+      font-family: var(--font-mono);
+      font-size: 9.5px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+    .bm-detail-table td { color: var(--text-secondary); }
+    .bm-detail-table td:first-child { color: var(--text); font-weight: 500; }
+    .bm-detail-table tr:last-child td { border-bottom: none; }
+
+    .callout-neutral {
+      background: var(--bg-surface);
+      border-color: var(--border-strong);
+      color: var(--text-secondary);
+      flex-direction: column;
+      align-items: stretch;
+      padding: 16px 20px;
+    }
+    .callout-neutral .callout-title {
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 8px;
+      font-variation-settings: 'opsz' 14, 'SOFT' 30;
+    }
+    .callout-neutral ul { list-style: none; padding: 0; margin: 0; }
+    .callout-neutral li {
+      position: relative;
+      padding-left: 14px;
+      margin-bottom: 4px;
+      font-size: 12.5px;
+      line-height: 1.7;
+    }
+    .callout-neutral li::before {
+      content: '\2022';
+      position: absolute;
+      left: 2px; top: 0;
+      color: var(--accent);
+      font-weight: 700;
+    }
+    .callout-neutral strong { color: var(--text); font-weight: 600; }
+    .callout-neutral code {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      background: var(--accent-dim);
+      color: var(--accent);
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+
+    @media (max-width: 640px) {
+      .strategy-section { padding: 18px 20px; }
+      .phase-content { padding-left: 20px; }
+      .phase-header { gap: 10px; padding: 14px 16px; }
+      .bm-detail-grid { grid-template-columns: 1fr; gap: 2px 0; }
+      .bm-detail-grid .detail-label { padding-top: 8px; }
+      .bm-detail-table th, .bm-detail-table td { padding: 4px 6px; font-size: 11px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-wrap">
+    <header class="page-header">
+      <a href="../../../index.html" class="page-back">返回首页</a>
+      <div class="page-eyebrow">Chromium · Test Plan</div>
+      <h1 class="page-title">WebView <em>升核测试</em></h1>
+      <p class="page-subtitle">基准测试 · 测试方案 · 升核资源</p>
+    </header>
+
+    <div class="tab-bar">
+      <a class="tab-btn" href="./webview_benchmarks.html">基准测试</a>
+      <a class="tab-btn active" href="./webview_test_plan.html">测试方案</a>
+      <a class="tab-btn" href="./webview_resources.html">升核资源</a>
+    </div>
+
+    <section class="strategy-section" style="margin-top:0; margin-bottom: 28px;">
+      <h2 class="strategy-title">推荐<em>策略</em></h2>
+      <ul class="strategy-list">
+        <li><strong>必测基准</strong> — <a href="https://browserbench.org/Speedometer3.0/" target="_blank">Speedometer 3.0</a>、<a href="https://browserbench.org/MotionMark/" target="_blank">MotionMark</a>、<a href="https://webglsamples.org/aquarium/aquarium.html" target="_blank">WebGL Aquarium</a></li>
+          <li><strong>业务页面性能</strong> — Lighthouse CLI 本地采集 Core Web Vitals（<a href="../kernel/kernel_test.html" target="_blank" style="color:var(--accent);text-decoration:none;border-bottom:1px solid var(--accent);">详见 Page Perf 执行指南</a>）</li>
+        <li><strong>兼容性与新 API</strong> — <a href="https://browserscore.dev/" target="_blank">Browser Score</a>、<a href="https://caniuse.com/" target="_blank">Can I Use</a></li>
+        <li><strong>媒体与网络</strong> — <a href="https://webrtc.github.io/samples/" target="_blank">WebRTC samples</a>、<a href="https://w3c.github.io/webcodecs/samples/" target="_blank">WebCodecs demo</a></li>
+      </ul>
+      <div class="callout callout-warn">
+        <span class="callout-icon">!</span>
+        <span>升核后最关键的是<strong>业务 H5 页面回归</strong>和 <strong>CPU / FPS / Memory 指标</strong>，第三方网站只能作为参考基准。</span>
+      </div>
+    </section>
+
+    <div class="callout callout-info" style="margin-bottom: 28px;">
+      <span class="callout-icon">i</span>
+      <span><strong>执行建议</strong> — P1 与 P2 可并行；P3 依赖 P1/P2 通过；P4 依赖 P3 通过。全流程预估 4–6 周（含灰度）。</span>
+    </div>
+
+    <div class="callout callout-neutral" style="margin-bottom: 28px;">
+      <div class="callout-title">通用测试规范</div>
+      <ul>
+        <li><strong>环境准备</strong> — 关闭所有扩展/后台应用；飞行模式 + 屏幕常亮 + 亮度固定50%</li>
+        <li><strong>设备预热</strong> — 开机 &gt; 5 分钟，浏览器冷启动后空闲 30 秒再开测</li>
+        <li><strong>重复次数</strong> — 每项基准跑 <code>3</code> 次，取中位数</li>
+        <li><strong>记录格式</strong> — 设备型号 + 系统版本 + 浏览器/内核版本 + 日期 + 三次分数 + 中位数</li>
+        <li><strong>对比要求</strong> — 同设备跨版本对比时，同一时段交替测试（排除温度差异）</li>
+        <li><strong>波动容差</strong> — 同设备同环境连续跑测允许 &plusmn;3%；跨日期允许 &plusmn;5%</li>
+      </ul>
+    </div>
+
+    <!-- ===== P1 ===== -->
+    <div class="plan-phase open">
+      <div class="phase-header">
+        <span class="phase-num">P1</span>
+        <div class="phase-meta">
+          <h3 class="phase-title">基准性能对比</h3>
+          <span class="phase-sub">升核前后核心指标量化对比，每个基准跑 3 轮取中位数</span>
+        </div>
+        <span class="phase-toggle">&darr;</span>
+      </div>
+      <div class="phase-body"><div class="phase-content">
+        <div class="phase-group">
+          <div class="phase-group-label">测试矩阵</div>
+          <ul class="phase-items">
+            <li>设备选取：低端机（4GB）+ 中端机（6–8GB）+ 高端机（12GB+） <span class="tag tag-must">必须</span></li>
+            <li>系统版本：覆盖 Android 12 / 14 / 15，确保跨版本无回归</li>
+            <li>每项基准运行 <code>3 轮</code>，取中位数；飞行模式 + 屏幕常亮 + 后台清空</li>
+          </ul>
+        </div>
+        <div class="phase-group">
+          <div class="phase-group-label">必测项</div>
+          <ul class="phase-items">
+            <li><strong><a href="https://browserbench.org/Speedometer3.0/" target="_blank">Speedometer 3.0</a></strong> — JS / 框架整体性能得分 <span class="tag tag-must">必测</span>
+              <div class="bm-detail">
+                <div class="bm-detail-grid">
+                  <span class="detail-label">测试操作</span><span class="detail-value">点击 "Start Test" 全自动运行，禁止切换标签页</span>
+                  <span class="detail-label">得分单位</span><span class="detail-value">runs/min（每分钟完成的迭代数），越高越好</span>
+                  <span class="detail-label">关注点</span><span class="detail-value">总分 + 各框架子项分布，某框架子项异常低可能暴露 V8 优化缺陷</span>
+                  <span class="detail-label">注意事项</span><span class="detail-value">确保设备散热稳定；关闭所有扩展</span>
+                </div>
+                <table class="bm-detail-table">
+                  <thead><tr><th>设备层级</th><th>参考区间</th><th>绝对红线</th></tr></thead>
+                  <tbody>
+                    <tr><td>高端移动(8Gen2+)</td><td>10–18 runs/min</td><td>&ge; 8</td></tr>
+                    <tr><td>中端移动(6Gen1)</td><td>6–12 runs/min</td><td>&ge; 5</td></tr>
+                    <tr><td>低端移动(4GB)</td><td>3–7 runs/min</td><td>&ge; 3</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </li>
+            <li><strong><a href="https://browserbench.org/JetStream/" target="_blank">JetStream 2</a></strong> — V8 + WebAssembly 综合分 <span class="tag tag-must">必测</span>
+              <div class="bm-detail">
+                <div class="bm-detail-grid">
+                  <span class="detail-label">测试操作</span><span class="detail-value">点击 "Start" 全自动，耗时约 3–5 分钟</span>
+                  <span class="detail-label">得分单位</span><span class="detail-value">综合几何平均分（geometric mean），越高越好</span>
+                  <span class="detail-label">关注点</span><span class="detail-value">总分 + Worst 5 子项 + Wasm 类子项单独对比</span>
+                  <span class="detail-label">注意事项</span><span class="detail-value">对 JIT Tier-up 敏感，冷启动 vs 热启动差异大；内存压力下 GC 子项劣化</span>
+                  <span class="detail-label">特殊规则</span><span class="detail-value">任意单子项劣化 &gt; 30%，即使总分通过，仍需提交根因分析</span>
+                </div>
+                <table class="bm-detail-table">
+                  <thead><tr><th>设备层级</th><th>参考区间</th><th>绝对红线</th></tr></thead>
+                  <tbody>
+                    <tr><td>高端移动</td><td>120–200</td><td>&ge; 95</td></tr>
+                    <tr><td>中端移动</td><td>70–130</td><td>&ge; 55</td></tr>
+                    <tr><td>低端移动</td><td>40–80</td><td>&ge; 35</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </li>
+            <li><strong><a href="https://browserbench.org/MotionMark/" target="_blank">MotionMark</a></strong> — 渲染 / 动画帧率得分 <span class="tag tag-must">必测</span>
+              <div class="bm-detail">
+                <div class="bm-detail-grid">
+                  <span class="detail-label">测试操作</span><span class="detail-value">选择 "Run Benchmark" 默认套件，约 2 分钟完成</span>
+                  <span class="detail-label">得分单位</span><span class="detail-value">score（60FPS 下能绘制复杂对象的加权几何均值），越高越好</span>
+                  <span class="detail-label">关注点</span><span class="detail-value">Multiply 子项(CSS合成层) + Canvas Lines(2D光栅化) + 帧率曲线平滑度</span>
+                  <span class="detail-label">注意事项</span><span class="detail-value">对 GPU 驱动版本极其敏感；分辨率/DPI 直接影响得分；统一窗口大小</span>
+                </div>
+                <table class="bm-detail-table">
+                  <thead><tr><th>设备层级</th><th>参考区间</th><th>绝对红线</th></tr></thead>
+                  <tbody>
+                    <tr><td>高端移动(Adreno 740)</td><td>400–900</td><td>&ge; 300</td></tr>
+                    <tr><td>中端移动(Adreno 619)</td><td>150–400</td><td>&ge; 120</td></tr>
+                    <tr><td>低端移动(Mali-G52)</td><td>80–200</td><td>&ge; 60</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </li>
+            <li><strong><a href="https://webglsamples.org/aquarium/aquarium.html" target="_blank">WebGL Aquarium</a></strong> — 3D 场景 GPU 渲染压力 FPS，默认 1000 鱼，建议梯度测试 1000 / 5000 鱼观察帧率衰减 <span class="tag tag-must">必测</span>
+              <div class="bm-detail">
+                <div class="bm-detail-grid">
+                  <span class="detail-label">测试操作</span><span class="detail-value">配置1：默认 1000 鱼，等待 10 秒稳定后读数 30 秒取平均 FPS<br>配置2：调至 5000 鱼（URL 参数 ?numFish=5000），同样 10s 稳定 + 30s 读数</span>
+                  <span class="detail-label">得分单位</span><span class="detail-value">FPS（页面左上角实时显示），越高越好</span>
+                  <span class="detail-label">衰减率公式</span><span class="detail-value">衰减率 = 1 - (5000鱼FPS / 1000鱼FPS)<br>&lt; 30% 优秀 / 30%–50% 正常 / &gt; 50% GPU 瓶颈</span>
+                  <span class="detail-label">注意事项</span><span class="detail-value">VSync 限制 FPS 上限 60；注意是否使用独显；保持标签页前台</span>
+                </div>
+                <table class="bm-detail-table">
+                  <thead><tr><th>设备层级</th><th>1000 鱼表现</th><th>5000 鱼表现</th><th>1000鱼红线</th></tr></thead>
+                  <tbody>
+                    <tr><td>高端移动</td><td>45–60 FPS</td><td>20–35 FPS</td><td>&ge; 35</td></tr>
+                    <tr><td>中端移动</td><td>30–50 FPS</td><td>12–25 FPS</td><td>&ge; 25</td></tr>
+                    <tr><td>低端移动</td><td>20–35 FPS</td><td>8–15 FPS</td><td>&ge; 15</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </li>
+          </ul>
+        </div>
+        <div class="phase-group">
+          <div class="phase-group-label">准出标准</div>
+          <table class="criteria-table"><thead><tr><th>指标</th><th>通过条件</th><th>绝对红线(移动端)</th><th>警告区间</th><th>阻断区间</th><th>级别</th></tr></thead><tbody>
+            <tr><td>Speedometer 3.0</td><td>新核 <span class="criteria-pass">&ge; 旧核 95%</span></td><td>见设备分级</td><td>R &isin; [0.90, 0.95) 需根因分析</td><td class="criteria-fail">R &lt; 0.90 禁止发版</td><td class="criteria-fail">P0</td></tr>
+            <tr><td>MotionMark</td><td>新核 <span class="criteria-pass">&ge; 旧核 90%</span></td><td>见设备分级</td><td>R &isin; [0.80, 0.90) 排查GPU</td><td class="criteria-fail">R &lt; 0.80 禁止发版</td><td class="criteria-fail">P0</td></tr>
+            <tr><td>WebGL 1000鱼</td><td>FPS <span class="criteria-pass">&ge; 旧核 90%</span></td><td>见设备分级</td><td>R &isin; [0.80, 0.90)</td><td class="criteria-fail">R &lt; 0.80</td><td>P1</td></tr>
+            <tr><td>WebGL 衰减率</td><td><span class="criteria-pass">&le; 旧核 + 10pp</span></td><td>—</td><td>差值 10–20pp</td><td class="criteria-fail">差值 &gt; 20pp</td><td>P1</td></tr>
+            <tr><td>JetStream 2</td><td>新核 <span class="criteria-pass">&ge; 旧核 90%</span></td><td>见设备分级</td><td>R &isin; [0.85, 0.90) 定位子项</td><td class="criteria-fail">R &lt; 0.85</td><td>P1</td></tr>
+          </tbody></table>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- ===== P2 ===== -->
+    <div class="plan-phase">
+      <div class="phase-header">
+        <span class="phase-num">P2</span>
+        <div class="phase-meta">
+          <h3 class="phase-title">Web 标准兼容性验证</h3>
+          <span class="phase-sub">确保升核后 API 支持不退化，新特性可用</span>
+        </div>
+        <span class="phase-toggle">&darr;</span>
+      </div>
+      <div class="phase-body"><div class="phase-content">
+        <div class="phase-group">
+          <div class="phase-group-label">测试项</div>
+          <ul class="phase-items">
+            <li><strong><a href="../kernel/kernel_test.html" target="_blank" style="color:var(--accent)">Kernel Test Suite</a></strong> — 内置 API 兼容性 + 性能回归测试，支持 CDP 自动化采集 <span class="tag tag-must">必测</span>
+              <div class="bm-detail">
+                <div class="bm-detail-grid">
+                  <span class="detail-label">采集方式</span><span class="detail-value">CDP（Chrome DevTools Protocol）自动化驱动，支持无头模式批量执行</span>
+                  <span class="detail-label">执行频率</span><span class="detail-value">每次内核版本升级 / 关键 patch 合入后必须执行</span>
+                  <span class="detail-label">0 容忍</span><span class="detail-value">不允许出现相对上一版本的<strong style="color:var(--red)">新增 Fail</strong>（除非有裁剪决策单）</span>
+                </div>
+                <table class="bm-detail-table">
+                  <thead><tr><th>维度</th><th>通过</th><th>警告</th><th>阻断</th></tr></thead>
+                  <tbody>
+                    <tr><td>API 兼容性通过率</td><td>&ge; 99.5%</td><td>98%–99.5%（逐条 review）</td><td>&lt; 98% 禁止发版</td></tr>
+                    <tr><td>性能回归（vs baseline P50）</td><td>&le; 5% 劣化</td><td>5%–15%（记 Ticket）</td><td>&gt; 15% bisect 定位</td></tr>
+                    <tr><td>新增 Fail 用例</td><td>0</td><td>—</td><td>&gt; 0（无豁免）</td></tr>
+                  </tbody>
+                </table>
+                <div class="bm-detail-grid" style="margin-top: 10px;">
+                  <span class="detail-label">CDP 参数</span><span class="detail-value"><code>--headless</code> <code>--disable-extensions</code> <code>--disable-background-timer-throttling</code> <code>--enable-precise-memory-info</code><br>5 次取 P50 / 单用例超时 30s / 整套超时 30min</span>
+                  <span class="detail-label">性能判定</span><span class="detail-value">跑 5 次取 P50（排除首次冷启动）&rarr; 对比 baseline P50 &rarr; 劣化 &gt; 15% 标记 REGRESSION &rarr; bisect 定位 commit &rarr; 修复后重新验证至 &le; 5%</span>
+                </div>
+              </div>
+            </li>
+            <li><strong><a href="https://browserscore.dev/" target="_blank" style="color:var(--accent)">Browser Score</a></strong> — 属性支持度评分，不应退化 <span class="tag tag-must">必测</span>
+              <div class="bm-detail">
+                <div class="bm-detail-grid">
+                  <span class="detail-label">测试内容</span><span class="detail-value">HTML5 / CSS3 / ES6+ / Web APIs / 安全特性的支持度检测（feature detection）</span>
+                  <span class="detail-label">核心原则</span><span class="detail-value"><strong style="color:var(--text)">不退化</strong> — 新版本得分 &ge; 上一版本得分</span>
+                  <span class="detail-label">竞品基准</span><span class="detail-value">目标：不低于上游 Chromium 同版本得分；关注与 Chrome Latest 的差距</span>
+                  <span class="detail-label">注意事项</span><span class="detail-value">工具更新可能导致满分变化（假退化）&rarr; 同时记录满分基数；部分特性需 HTTPS；确保用 feature detection 非 UA sniffing</span>
+                </div>
+                <table class="bm-detail-table">
+                  <thead><tr><th>退化处理步骤</th><th>说明</th></tr></thead>
+                  <tbody>
+                    <tr><td>1. 导出子项对比</td><td>标记所有"上版 &checkmark; &rarr; 本版 &cross;"的特性</td></tr>
+                    <tr><td>2. 逐项确认原因</td><td>主动裁剪 &rarr; 豁免 / 引擎副作用 &rarr; 必修 / 工具误报 &rarr; 验证后豁免</td></tr>
+                    <tr><td>3. 判定结论</td><td>非豁免退化项 &gt; 0 &rarr; <strong style="color:var(--red)">阻断发版</strong></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </li>
+          </ul>
+        </div>
+        <div class="phase-group">
+          <div class="phase-group-label">业务 API 重点检查</div>
+          <ul class="phase-items">
+            <li>对照 <strong><a href="https://chromiumdash.appspot.com/" target="_blank">Chromium Dash</a></strong> 确认 feature flags 和 breaking changes <span class="tag tag-must">必查</span></li>
+            <li>重点关注：<code>SameSite</code> 策略、<code>Mixed Content</code> 拦截、<code>CORS</code> 行为变更</li>
+            <li><strong><a href="https://caniuse.com/" target="_blank">Can I Use</a></strong> 作为查询参考——确认目标版本对业务关键 API 的支持状态（非执行测试）</li>
+          </ul>
+        </div>
+        <div class="phase-group">
+          <div class="phase-group-label">准出标准</div>
+          <table class="criteria-table"><thead><tr><th>指标</th><th>通过条件</th><th>绝对红线</th><th>警告区间</th><th>阻断区间</th><th>级别</th></tr></thead><tbody>
+            <tr><td>Kernel Test Suite — API 通过率</td><td><span class="criteria-pass">&ge; 99.5%</span> 且新增 Fail = 0</td><td>通过率 &lt; 98%</td><td>98%–99.5%（逐条 review 新增 Fail）</td><td class="criteria-fail">&lt; 98% 或任何无豁免的新增 Fail</td><td class="criteria-fail">P0</td></tr>
+            <tr><td>Kernel Test Suite — 性能回归</td><td>核心路径耗时劣化 <span class="criteria-pass">&le; 5%</span>（vs baseline P50）</td><td>劣化 &gt; 15%</td><td>5%–15%（记 Ticket，下迭代修复）</td><td class="criteria-fail">&gt; 15% bisect 定位，禁止发版</td><td class="criteria-fail">P0</td></tr>
+            <tr><td>Browser Score 总分</td><td><span class="criteria-pass">&ge; 旧核分数</span>（同一满分基数下）</td><td>退化 &gt; 2%</td><td>总分退化但退化项均已豁免</td><td class="criteria-fail">存在非豁免退化项</td><td>P1</td></tr>
+            <tr><td>Browser Score 子项退化</td><td>不存在"上版 &checkmark; &rarr; 本版 &cross;"的非豁免项</td><td>—</td><td>退化项全部有裁剪决策单</td><td class="criteria-fail">非豁免退化项 &gt; 0</td><td class="criteria-fail">P0</td></tr>
+            <tr><td>业务关键 API</td><td>全部<span class="criteria-pass">可用且行为一致</span></td><td>任一 API 不可用</td><td>行为变更但有兼容方案</td><td class="criteria-fail">API 不可用或无法兼容</td><td class="criteria-fail">P0</td></tr>
+            <tr><td>Breaking Changes</td><td>全部<span class="criteria-pass">已评估 + 已验证</span></td><td>存在未评估项</td><td>已评估、影响可控、有预案</td><td class="criteria-fail">影响业务且无预案</td><td class="criteria-fail">P0</td></tr>
+          </tbody></table>
+          <div class="bm-detail" style="margin-top: 12px;">
+            <div class="bm-detail-grid">
+              <span class="detail-label">Kernel Test</span><span class="detail-value"><strong style="color:var(--text)">Fail Diff 报告</strong>：每次执行必须生成 <code>[新增Fail]</code> <code>[修复Pass]</code> <code>[持续Fail]</code> 三类分类报告。新增 Fail 逐条判定 &rarr; 有裁剪决策单则豁免，否则阻断。</span>
+              <span class="detail-label">Browser Score</span><span class="detail-value"><strong style="color:var(--text)">退化项三步判定</strong>：导出子项差异 &rarr; 逐项归因（主动裁剪/引擎副作用/工具误报）&rarr; 非豁免项 &gt; 0 即阻断。注意区分工具满分基数变化导致的"假性退化"。</span>
+              <span class="detail-label">业务 API</span><span class="detail-value">验证范围：JS Bridge、Cookie/Storage、支付回调、登录态、Deep Link、WebSocket、地理位置等核心通道。对照 Chromium Dash 逐条核实行为变更。</span>
+              <span class="detail-label">Breaking Changes</span><span class="detail-value">评估清单：<code>SameSite</code> 默认值、<code>Mixed Content</code> 自动升级、<code>CORS</code> 预检策略、<code>Permissions Policy</code> 新增限制、废弃 API 移除（如 document.domain）。每项需输出「影响面 + 兼容方案 + 验证结果」。</span>
+            </div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- ===== P3 ===== -->
+    <div class="plan-phase">
+      <div class="phase-header">
+        <span class="phase-num">P3</span>
+        <div class="phase-meta">
+          <h3 class="phase-title">业务页面回归测试</h3>
+          <span class="phase-sub">覆盖核心业务 H5，真实设备 + 性能采集</span>
+        </div>
+        <span class="phase-toggle">&darr;</span>
+      </div>
+      <div class="phase-body"><div class="phase-content">
+        <div class="phase-group">
+          <div class="phase-group-label">页面性能采集</div>
+          <ul class="phase-items">
+            <li>选取 <code>5–10</code> 个核心 H5 页面（如 <a href="https://so.com" target="_blank">so.com</a>、首页、商详、支付、活动页等） <span class="tag tag-must">必须</span></li>
+            <li><strong>Lighthouse CLI</strong> 采集 Core Web Vitals（内部 H5 无法用 PageSpeed Insights） <span class="tag tag-must">必测</span></li>
+            <li><code>adb shell dumpsys gfxinfo</code> 采集帧率和 Jank 率</li>
+            <li><code>Android Profiler</code> 监控 CPU / Memory / 网络耗时</li>
+            <li><strong><a href="../kernel/kernel_test.html" target="_blank" style="color:var(--accent)">Kernel Test Suite &rarr; Page Perf</a></strong> — 完整执行指南（以 so.com 为例：Lighthouse 6 步自动化 + gfxinfo + Profiler） <span class="tag tag-rec">详见</span></li>
+          </ul>
+        </div>
+        <div class="phase-group">
+          <div class="phase-group-label">功能回归</div>
+          <ul class="phase-items">
+            <li>JS Bridge：Native &harr; JS 双向通信 <span class="tag tag-must">必测</span></li>
+            <li>登录态保持：Cookie / Token 跳转不丢失 <span class="tag tag-must">必测</span></li>
+            <li>多媒体：视频自动播放、音频后台播放、PiP <span class="tag tag-rec">推荐</span></li>
+            <li>文件操作：上传 / 选择 / 下载 <span class="tag tag-rec">推荐</span></li>
+            <li><strong><a href="https://webrtc.github.io/samples/" target="_blank">WebRTC</a></strong> / <strong><a href="https://w3c.github.io/webcodecs/samples/" target="_blank">WebCodecs</a></strong>（如业务涉及） <span class="tag tag-opt">选测</span></li>
+          </ul>
+        </div>
+        <div class="phase-group">
+          <div class="phase-group-label">准出标准</div>
+          <table class="criteria-table"><thead><tr><th>指标</th><th>说明</th><th>通过条件</th><th>级别</th></tr></thead><tbody>
+            <tr><td>FCP</td><td style="color:var(--text-muted);font-size:11px;">First Contentful Paint — 首次内容绘制时间</td><td>新核 <span class="criteria-pass">&le; 旧核 110%</span></td><td class="criteria-fail">P0</td></tr>
+            <tr><td>LCP</td><td style="color:var(--text-muted);font-size:11px;">Largest Contentful Paint — 最大内容绘制时间</td><td>新核 <span class="criteria-pass">&le; 旧核 110%</span></td><td class="criteria-fail">P0</td></tr>
+            <tr><td>CLS</td><td style="color:var(--text-muted);font-size:11px;">Cumulative Layout Shift — 累积布局偏移量</td><td><span class="criteria-pass">&lt; 0.1</span></td><td>P1</td></tr>
+            <tr><td>INP</td><td style="color:var(--text-muted);font-size:11px;">Interaction to Next Paint — 交互到下一次绘制延迟</td><td>新核 <span class="criteria-pass">&le; 旧核 110%</span></td><td>P1</td></tr>
+            <tr><td>JS Bridge</td><td style="color:var(--text-muted);font-size:11px;">Native &harr; JS 双向通信通道</td><td>全部<span class="criteria-pass">正常</span></td><td class="criteria-fail">P0</td></tr>
+            <tr><td>Jank 率</td><td style="color:var(--text-muted);font-size:11px;">丢帧比例 = Janky frames / Total frames</td><td>新核 <span class="criteria-pass">&le; 旧核</span></td><td>P1</td></tr>
+            <tr><td>内存峰值</td><td style="color:var(--text-muted);font-size:11px;">页面运行期间 PSS 最大值</td><td>新核 <span class="criteria-pass">&le; 旧核 120%</span></td><td>P1</td></tr>
+          </tbody></table>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- ===== P4 ===== -->
+    <div class="plan-phase">
+      <div class="phase-header">
+        <span class="phase-num">P4</span>
+        <div class="phase-meta">
+          <h3 class="phase-title">稳定性与灰度验证</h3>
+          <span class="phase-sub">长时间运行 + 灰度放量，收集线上指标</span>
+        </div>
+        <span class="phase-toggle">&darr;</span>
+      </div>
+      <div class="phase-body"><div class="phase-content">
+        <div class="phase-group">
+          <div class="phase-group-label">稳定性测试</div>
+          <ul class="phase-items">
+            <li>Monkey：<code>adb shell monkey -p &lt;pkg&gt; --throttle 300 -v 50000</code> <span class="tag tag-must">必测</span></li>
+            <li>长时间浏览（30min+），监控内存泄漏 <span class="tag tag-must">必测</span></li>
+            <li>多 WebView 实例并发（5+），无 OOM <span class="tag tag-rec">推荐</span></li>
+            <li>弱网测试：3G / 弱 4G / 高丢包 <span class="tag tag-rec">推荐</span></li>
+          </ul>
+        </div>
+        <div class="phase-group">
+          <div class="phase-group-label">灰度策略</div>
+          <ul class="phase-items">
+            <li>第 1 周：内部员工全量 &rarr; 收集 Crash / ANR / 性能指标</li>
+            <li>第 2 周：外部灰度 <code>5%</code> &rarr; 对比大盘 P50 / P90</li>
+            <li>第 3 周：放量至 <code>20%</code> &rarr; 确认平稳后继续</li>
+            <li>第 4 周：全量发布 &rarr; 持续监控 7 天</li>
+          </ul>
+        </div>
+        <div class="phase-group">
+          <div class="phase-group-label">回滚标准（任一触发即停止灰度并回滚）</div>
+          <ul class="phase-items">
+            <li>Crash 率 <strong>&gt; 对照组 &times; 1.2（相对增幅 20%）</strong>且持续 1 小时以上</li>
+            <li>ANR 率 <strong>&gt; 对照组 &times; 1.5（相对增幅 50%）</strong></li>
+            <li>页面加载 P90 <strong>&gt; 对照组 &times; 1.3（相对增幅 30%）</strong>且无法定位原因</li>
+          </ul>
+        </div>
+        <div class="phase-group">
+          <div class="phase-group-label">准出标准</div>
+          <table class="criteria-table"><thead><tr><th>指标</th><th>通过条件</th><th>级别</th></tr></thead><tbody>
+            <tr><td>Crash 率</td><td>灰度 <span class="criteria-pass">&le; 对照</span></td><td class="criteria-fail">P0</td></tr>
+            <tr><td>ANR 率</td><td>灰度 <span class="criteria-pass">&le; 对照</span></td><td class="criteria-fail">P0</td></tr>
+            <tr><td>页面加载 P90</td><td>灰度 <span class="criteria-pass">&le; 对照 110%</span></td><td>P1</td></tr>
+            <tr><td>Monkey 50K</td><td><span class="criteria-pass">0 Crash</span></td><td class="criteria-fail">P0</td></tr>
+            <tr><td>内存泄漏</td><td>30min 后<span class="criteria-pass">回落至基线 &plusmn;20%</span></td><td>P1</td></tr>
+          </tbody></table>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- ===== Escalation ===== -->
+    <section class="strategy-section" style="margin-top: 36px;">
+      <h2 class="strategy-title">阻断<em>处理时限</em></h2>
+      <table class="criteria-table">
+        <thead><tr><th>阻断类型</th><th>最长处理时限</th></tr></thead>
+        <tbody>
+          <tr><td>P0 阻断（Speedometer / MotionMark / Kernel Test / JS Bridge）</td><td class="criteria-fail">48h</td></tr>
+          <tr><td>P1 阻断（WebGL / JetStream / Browser Score / 页面性能）</td><td>1 周</td></tr>
+          <tr><td>绝对红线触发（分数低于设备分级下限）</td><td class="criteria-fail">24h</td></tr>
+          <tr><td>单子项异常（总分通过但子项劣化 &gt; 30%）</td><td>下一迭代闭环</td></tr>
+        </tbody>
+      </table>
+      <div class="callout callout-warn" style="margin-top: 16px;">
+        <span class="callout-icon">!</span>
+        <span>P0 阻断期间<strong>冻结代码合入</strong>，直至修复验证通过并经技术负责人 sign-off。</span>
+      </div>
+    </section>
+
+
+
+  </div>
+
+  <script>
+    document.querySelectorAll('.phase-header').forEach(function(header) {
+      header.addEventListener('click', function() {
+        header.parentElement.classList.toggle('open');
+      });
+    });
+  </script>
+</body>
+</html>

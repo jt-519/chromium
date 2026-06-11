@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#f4f1ea" />
+  <title>基准测试 | WebView 升核</title>
+  <link rel="stylesheet" href="../../../assets/css/pages.css" />
+  <style>
+    .page-wrap { max-width: 880px; }
+  </style>
+</head>
+<body>
+  <div class="page-wrap">
+    <header class="page-header">
+      <a href="../../../index.html" class="page-back">返回首页</a>
+      <div class="page-eyebrow">Chromium · Benchmark</div>
+      <h1 class="page-title">WebView <em>升核测试</em></h1>
+      <p class="page-subtitle">基准测试 · 测试方案 · 升核资源</p>
+    </header>
+
+    <div class="tab-bar">
+      <a class="tab-btn active" href="./webview_benchmarks.html">基准测试</a>
+      <a class="tab-btn" href="./webview_test_plan.html">测试方案</a>
+      <a class="tab-btn" href="./webview_resources.html">升核资源</a>
+    </div>
+
+    <section class="p-section">
+      <h2 class="p-section-title">JS 性能与前端框架<span class="sect-num">01</span></h2>
+      <div class="p-divider"></div>
+      <div class="benchmark-grid">
+        <div class="bm-card">
+          <div class="bm-header">
+            <h3 class="bm-title">Speedometer 3.0</h3>
+            <a href="https://browserbench.org/Speedometer3.0/" target="_blank" class="bm-url">TEST &nearr;</a>
+          </div>
+          <div class="bm-desc">JS 执行、框架（React / Vue / Angular）操作性能</div>
+          <div class="bm-usecase">JS / 框架性能对比，升级前后回归</div>
+        </div>
+        <div class="bm-card">
+          <div class="bm-header">
+            <h3 class="bm-title">JetStream 2</h3>
+            <a href="https://browserbench.org/JetStream/" target="_blank" class="bm-url">TEST &nearr;</a>
+          </div>
+          <div class="bm-desc">JS 引擎、WebAssembly 性能</div>
+          <div class="bm-usecase">V8 性能和 WebAssembly 评估</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="p-section">
+      <h2 class="p-section-title">渲染与动画性能<span class="sect-num">02</span></h2>
+      <div class="p-divider"></div>
+      <div class="benchmark-grid">
+        <div class="bm-card">
+          <div class="bm-header">
+            <h3 class="bm-title">MotionMark</h3>
+            <a href="https://browserbench.org/MotionMark/" target="_blank" class="bm-url">TEST &nearr;</a>
+          </div>
+          <div class="bm-desc">Canvas、SVG、CSS 动画、GPU 渲染</div>
+          <div class="bm-usecase">页面动画流畅度和 GPU 渲染能力</div>
+        </div>
+        <div class="bm-card">
+          <div class="bm-header">
+            <h3 class="bm-title">WebGL Aquarium</h3>
+            <a href="https://webglsamples.org/aquarium/aquarium.html" target="_blank" class="bm-url">TEST &nearr;</a>
+          </div>
+          <div class="bm-desc">WebGL 3D 水族馆场景——动态鱼群 + 光照反射 + 水面折射，实时显示 FPS。可调节鱼数量（默认 1000 → 最高 30000）来逐级加压</div>
+          <div class="bm-usecase">GPU 图形管线吞吐量、WebGL 驱动质量、高 draw call 场景帧率稳定性</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="p-section">
+      <h2 class="p-section-title">Web 标准与 API 支持<span class="sect-num">03</span></h2>
+      <div class="p-divider"></div>
+      <div class="benchmark-grid">
+        <div class="bm-card">
+          <div class="bm-header">
+            <h3 class="bm-title">Can I Use</h3>
+            <a href="https://caniuse.com/" target="_blank" class="bm-url">REF &nearr;</a>
+          </div>
+          <div class="bm-desc">各 Web API 支持情况查询</div>
+          <div class="bm-usecase">查询参考，非可执行测试；用于确认特定 API 在目标版本的支持状态</div>
+        </div>
+        <div class="bm-card">
+          <div class="bm-header">
+            <h3 class="bm-title">Browser Score</h3>
+            <a href="https://browserscore.dev/" target="_blank" class="bm-url">TEST &nearr;</a>
+          </div>
+          <div class="bm-desc">CSS / Web Platform 特性识别度评分</div>
+          <div class="bm-usecase">CSS3 Test 的接班版本，特性支持检查</div>
+        </div>
+        <div class="bm-card">
+          <div class="bm-header">
+            <h3 class="bm-title">Chromium Dash</h3>
+            <a href="https://chromiumdash.appspot.com/" target="_blank" class="bm-url">REF &nearr;</a>
+          </div>
+          <div class="bm-desc">版本发布进度与功能跟踪</div>
+          <div class="bm-usecase">内核版本号对应的功能变更</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="p-section">
+      <h2 class="p-section-title">页面性能<span class="sect-num">04</span></h2>
+      <div class="p-divider"></div>
+      <div class="benchmark-grid">
+        <div class="bm-card">
+          <div class="bm-header">
+            <h3 class="bm-title">PageSpeed Insights</h3>
+            <a href="https://pagespeed.web.dev/" target="_blank" class="bm-url">TEST &nearr;</a>
+          </div>
+          <div class="bm-desc">FCP、LCP、CLS、INP、加载时间</div>
+          <div class="bm-usecase">仅限公网可访问页面；内部 H5 改用 <code style="font-size:11px">lighthouse --output json</code> CLI 替代</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="p-section">
+      <h2 class="p-section-title">网络与多媒体能力<span class="sect-num">05</span></h2>
+      <div class="p-divider"></div>
+      <div class="benchmark-grid">
+        <div class="bm-card">
+          <div class="bm-header">
+            <h3 class="bm-title">WebRTC samples</h3>
+            <a href="https://webrtc.github.io/samples/" target="_blank" class="bm-url">TEST &nearr;</a>
+          </div>
+          <div class="bm-desc">音视频采集与传输</div>
+          <div class="bm-usecase">WebView 媒体能力和兼容性</div>
+        </div>
+        <div class="bm-card">
+          <div class="bm-header">
+            <h3 class="bm-title">WebCodecs demo</h3>
+            <a href="https://w3c.github.io/webcodecs/samples/" target="_blank" class="bm-url">TEST &nearr;</a>
+          </div>
+          <div class="bm-desc">视频编解码能力</div>
+          <div class="bm-usecase">新 Web API 和视频播放验证</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="p-section">
+      <h2 class="p-section-title">已废弃测试网站<span class="sect-num">06</span></h2>
+      <div class="p-divider"></div>
+      <table class="criteria-table" style="font-size:12px; margin-top:0;">
+        <thead><tr><th>网站</th><th>废弃时间</th><th>原因</th><th>替代</th></tr></thead>
+        <tbody>
+          <tr><td><a href="https://html5test.co/" target="_blank" style="color:var(--accent);text-decoration:none;">HTML5Test</a></td><td>2016 停更 / 2024 宕机</td><td>用例停留在 2016，无法覆盖新 API；镜像为非官方维护</td><td><a href="https://browserscore.dev/" target="_blank" style="color:var(--accent);text-decoration:none;">Browser Score</a></td></tr>
+          <tr><td><a href="https://chromium.github.io/octane/" target="_blank" style="color:var(--accent);text-decoration:none;">Octane 2.0</a></td><td>2017 Google 退役</td><td>引擎过度优化致跑分与真实性能脱节</td><td><a href="https://browserbench.org/Speedometer3.0/" target="_blank" style="color:var(--accent);text-decoration:none;">Speedometer 3.0</a></td></tr>
+          <tr><td><a href="https://web.archive.org/web/20210126143341/https://www2.webkit.org/perf/sunspider/sunspider.html" target="_blank" style="color:var(--accent);text-decoration:none;">SunSpider 1.0.2</a></td><td>2015 WebKit 停维</td><td>微基准局限，子项过简，可 trick 刷分</td><td><a href="https://browserbench.org/JetStream/" target="_blank" style="color:var(--accent);text-decoration:none;">JetStream 2</a></td></tr>
+          <tr><td><a href="https://mozilla.github.io/krakenbenchmark.mozilla.org/" target="_blank" style="color:var(--accent);text-decoration:none;">Kraken 1.1</a></td><td>Mozilla 长期停维</td><td>基于 SunSpider 架构，对现代 JIT 无鉴别力</td><td>—</td></tr>
+          <tr><td><a href="http://acid3.acidtests.org/" target="_blank" style="color:var(--accent);text-decoration:none;">Acid3</a></td><td>2013 WaSP 停运</td><td>测试用例与后续 W3C 规范冲突，现代浏览器均无法通过</td><td><a href="https://wpt.fyi/" target="_blank" style="color:var(--accent);text-decoration:none;">WPT</a></td></tr>
+          <tr><td>Peacekeeper</td><td>2015 停支持 / 2018 下线</td><td>官方判定浏览器速度竞争已无意义</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+  </div>
+</body>
+</html>

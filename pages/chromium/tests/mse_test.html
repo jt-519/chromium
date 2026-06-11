@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#f4f1ea" />
+  <title>Browser DevTools | 浏览器测试控制台</title>
+  <link rel="stylesheet" href="../../../assets/css/pages.css" />
+</head>
+
+<body>
+  <div class="page-wrap">
+    <!-- Header -->
+    <header class="page-header">
+      <a href="../../../index.html" class="page-back">返回首页</a>
+      <div class="page-eyebrow">Chromium · DevTools Console</div>
+      <h1 class="page-title">浏览器<em>测试</em>控制台</h1>
+      <p class="page-subtitle">Browser Extension & JSBridge Testing Dashboard</p>
+    </header>
+
+    <!-- UA Info -->
+    <div class="p-ua-banner" id="uaInfo">
+      <span class="ua-label">User Agent</span>
+      <span id="uaText">loading...</span>
+    </div>
+
+    <!-- 页面控制 -->
+    <section class="dev-section">
+      <div class="dev-section-header">
+        <svg class="dev-section-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+        <h2 class="dev-section-title">页面控制</h2>
+        <span class="dev-section-count">2 actions</span>
+      </div>
+      <div class="p-btn-grid" style="grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));">
+        <button class="p-btn" id="closePage">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          关闭页面
+        </button>
+        <button class="p-btn" id="onBackPressed">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          返回上一页
+        </button>
+      </div>
+    </section>
+
+    <!-- 扩展管理 -->
+    <section class="dev-section">
+      <div class="dev-section-header">
+        <svg class="dev-section-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--violet)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+        <h2 class="dev-section-title">扩展管理</h2>
+        <span class="dev-section-count">5 actions</span>
+      </div>
+      <div class="p-btn-grid">
+        <button class="p-btn" id="openCrxManagerPage">打开扩展管理页面</button>
+        <button class="p-btn" id="isSettingsEnabled">检查扩展功能开关</button>
+        <button class="p-btn" id="installLocalExtension">安装本地扩展</button>
+        <button class="p-btn" id="getDevModeEnabled">获取开发者模式状态</button>
+        <button class="p-btn" id="setDevModeEnabled">设置开发者模式</button>
+      </div>
+    </section>
+
+    <!-- 扩展操作 -->
+    <section class="dev-section">
+      <div class="dev-section-header">
+        <svg class="dev-section-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <h2 class="dev-section-title">扩展操作</h2>
+        <span class="dev-section-count">6 actions</span>
+      </div>
+      <div class="p-btn-grid">
+        <button class="p-btn" id="getInstallState">获取安装状态</button>
+        <button class="p-btn" id="getExtensionIcon">获取扩展图标</button>
+        <button class="p-btn" id="getInstalledItems">查看已安装扩展</button>
+        <button class="p-btn" id="removeExtension">卸载扩展</button>
+        <button class="p-btn" id="changeExtensionState">启用/禁用扩展</button>
+        <button class="p-btn" id="isExtensionEnabled">检查扩展是否可用</button>
+      </div>
+    </section>
+
+    <!-- 快速安装 -->
+    <section class="dev-section">
+      <div class="dev-section-header">
+        <svg class="dev-section-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+        <h2 class="dev-section-title">快速安装扩展</h2>
+        <span class="dev-section-count">9 extensions</span>
+      </div>
+      <div class="p-btn-grid">
+        <button class="p-btn p-btn-green InstallExtension" ext-id="ddkjiahejlhfcafbddmgiahcphecmpfh" ext-name="uBlock-Origin-Lite-2024.9.12.1004">
+          安装 uBlock Origin Lite
+        </button>
+        <button class="p-btn p-btn-green InstallExtension" ext-id="bpoadfkcbjbfhfodiogcnhhhpibjhbnh" ext-name="沉浸式翻译-1.9.6">
+          安装 沉浸式翻译
+        </button>
+      </div>
+
+      <details class="dev-details">
+        <summary>更多扩展 (点击展开)</summary>
+        <div class="p-btn-grid">
+          <button class="p-btn p-btn-green InstallExtension" ext-id="eimadpbcbfnmbkopoojfekhnkhdbieeh" ext-name="dark-reader_4.9.88">
+            安装 Dark Reader
+          </button>
+          <button class="p-btn p-btn-green InstallExtension" ext-id="jpbjcnkcffbooppibceonlgknpkniiff" ext-name="Global-Speed-3.0.9971">
+            安装 Global Speed
+          </button>
+          <button class="p-btn p-btn-green InstallExtension" ext-id="lobgmjplponpghhahhmpfhnaiegjipaf" ext-name="Easy-QR-Code-1.0.7">
+            安装 Easy QR Code
+          </button>
+          <button class="p-btn p-btn-green InstallExtension" ext-id="hlkenndednhfkekhgcdicdfddnkalmdm" ext-name="Cookie-Editor-1.13.0">
+            安装 Cookie Editor
+          </button>
+          <button class="p-btn p-btn-green InstallExtension" ext-id="okckmdcaaieknndlpbpjjnfmbakdjnbe" ext-name="Cookie-Manager-0.0.2">
+            安装 Cookie Manager
+          </button>
+          <button class="p-btn p-btn-green InstallExtension" ext-id="edibdbjcniadpccecjdfdjjppcpchdlm" ext-name="i-still-dont-care-about-cookie-1.1.4">
+            安装 I Still Don't Care
+          </button>
+          <button class="p-btn p-btn-green InstallExtension" ext-id="gcckmgpflcgmojmpblplppomkmcdjlan" ext-name="找券券_3.3.3">
+            安装 找券券
+          </button>
+        </div>
+      </details>
+    </section>
+
+    <!-- 信息选项 -->
+    <section class="dev-section">
+      <div class="dev-section-header">
+        <svg class="dev-section-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        <h2 class="dev-section-title">信息选项</h2>
+      </div>
+      <div class="p-form-group">
+        <label class="p-label" for="responsibility">选择职责范围</label>
+        <select class="p-select" id="responsibility" name="responsibility">
+          <option value="project_management">Project Management</option>
+          <option value="software_development">Software Development</option>
+          <option value="system_design">System Design</option>
+          <option value="quality_assurance">Quality Assurance</option>
+          <option value="technical_support">Technical Support</option>
+        </select>
+      </div>
+      <div class="p-btn-grid" style="grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); margin-top: 12px;">
+        <button class="p-btn" id="showUA">显示 User Agent</button>
+      </div>
+    </section>
+
+    <!-- 链接导航 -->
+    <section class="dev-section">
+      <div class="dev-section-header">
+        <svg class="dev-section-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        <h2 class="dev-section-title">链接导航</h2>
+        <span class="dev-section-count">6 links</span>
+      </div>
+      <div class="p-btn-grid">
+        <a class="p-btn p-btn-blue" href="chrome-error://chromewebdata/" target="_blank">Chrome 错误页面</a>
+        <button class="p-btn p-btn-blue" id="windowOpenUrl">新窗口打开 GitHub</button>
+        <button class="p-btn p-btn-blue" id="closeWindow">关闭当前窗口</button>
+        <a class="p-btn p-btn-blue" href="https://www.baidu.com" target="_blank">百度</a>
+        <a class="p-btn p-btn-blue" href="https://www.sina.cn" target="_blank">新浪</a>
+        <a class="p-btn p-btn-blue" href="https://storage.pangdasc.com/pages/771427447166/landing_mt9_page.html?mediaPlatformType=9&source_id={source_id}&advertiserId=1264047&planid={planid}&keywordid={keywordid}&creativeid={creativeid}&groupid={groupid}&device={device}&t=1711608465876" target="_blank">测试落地页</a>
+      </div>
+    </section>
+
+    <!-- 控制台日志 -->
+    <section class="dev-section">
+      <div class="dev-section-header">
+        <svg class="dev-section-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+        <h2 class="dev-section-title">控制台日志</h2>
+        <span class="dev-section-count">output</span>
+      </div>
+      <div class="p-console" id="consoleOutput"></div>
+    </section>
+  </div>
+
+  <!-- Popup -->
+  <div id="popup-overlay" class="popup-overlay" onclick="closePopup()"></div>
+  <div id="popup" class="popup" role="dialog" aria-modal="true" aria-labelledby="popup-title-text">
+    <div class="popup-header">
+      <span class="popup-title" id="popup-title-text">信息</span>
+      <button class="popup-close" onclick="closePopup()" aria-label="关闭">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="popup-body">
+      <p id="popup-message"></p>
+    </div>
+    <div class="popup-footer">
+      <button class="popup-btn popup-btn-copy" id="popup-copy-btn" onclick="copyPopupContent()">复制</button>
+      <button class="popup-btn popup-btn-close" onclick="closePopup()">关闭</button>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="p-toast" role="status" aria-live="polite">
+    <span class="message">This is a toast message!</span>
+  </div>
+
+  <script src="../../../assets/js/mse_test.js"></script>
+
+  <!-- QR Code Button -->
+  <button class="qr-btn" aria-label="Show QR code"></button>
+  <script src="../../../assets/js/qrcode.js"></script>
+
+</body>
+</html>

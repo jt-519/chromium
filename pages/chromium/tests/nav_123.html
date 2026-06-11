@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f4f1ea" />
+  <title>Nav · 测试导航 — dev-page</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="../../../assets/css/pages.css">
+</head>
+<body>
+  <div class="page-wrap">
+    <header class="page-header">
+      <a href="../../../index.html" class="page-back">返回导航首页</a>
+      <div class="page-eyebrow">Chromium · nav_123</div>
+      <h1 class="page-title">UA <em>&amp;</em> 导航</h1>
+      <p class="page-subtitle">User Agent 信息展示 + 常用测试链接</p>
+    </header>
+
+    <!-- UA 信息 -->
+    <div class="p-section">
+      <div class="p-section-title">User Agent Info</div>
+      <div class="p-divider"></div>
+      <div class="p-ua-banner">
+        <span class="ua-label">UA</span>
+        <span id="uaInfo">Loading...</span>
+      </div>
+      <button class="p-btn p-btn-accent" id="showUA" style="max-width:200px;">
+        Alert 显示 UA
+      </button>
+    </div>
+
+    <!-- 快速链接 -->
+    <div class="p-section">
+      <div class="p-section-title">链接导航</div>
+      <div class="p-divider"></div>
+      <div class="p-btn-grid">
+        <a class="p-btn p-btn-red" href="chrome-error://chromewebdata/" target="_blank">
+          Chrome 错误页
+        </a>
+        <a class="p-btn p-btn-blue" href="https://www.baidu.com" target="_blank">
+          百度
+        </a>
+        <a class="p-btn p-btn-blue" href="https://www.sina.cn" target="_blank">
+          新浪
+        </a>
+        <a class="p-btn p-btn-teal" href="https://storage.pangdasc.com/pages/771427447166/landing_mt9_page.html?mediaPlatformType=9&source_id={source_id}&advertiserId=1264047&planid={planid}&keywordid={keywordid}&creativeid={creativeid}&groupid={groupid}&device={device}&t=1711608465876" target="_blank">
+          测试落地页
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('uaInfo').textContent = navigator.userAgent;
+    document.getElementById('showUA').addEventListener('click', function() {
+      alert("您的 User Agent 是:\n\n" + navigator.userAgent);
+    });
+  </script>
+
+  <!-- QR Code Button -->
+  <button class="qr-btn" aria-label="Show QR code"></button>
+  <script src="../../../assets/js/qrcode.js"></script>
+
+</body>
+</html>

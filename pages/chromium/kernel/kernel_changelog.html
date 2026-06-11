@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#f4f1ea" />
+  <title>内核版本变更记录 | Chromium M124 → M149</title>
+  <link rel="stylesheet" href="../../../assets/css/pages.css" />
+  <style>
+    .page-wrap { max-width: 880px; }
+
+    .kcl-tabs {
+      display: flex;
+      gap: 0;
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--border-strong);
+    }
+    .kcl-tab {
+      padding: 14px 22px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-family: var(--font-body);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      position: relative;
+      transition: color 0.18s;
+    }
+    .kcl-tab:hover { color: var(--text); }
+    .kcl-tab.active { color: var(--text); }
+    .kcl-tab.active::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: -1px;
+      height: 2px;
+      background: var(--accent);
+    }
+    .kcl-panel { display: none; }
+    .kcl-panel.active { display: block; }
+
+    .kcl-filter {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 28px;
+    }
+    .kcl-filter-btn {
+      padding: 7px 14px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--bg-card);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .kcl-filter-btn:hover { border-color: var(--accent-border); color: var(--accent); }
+    .kcl-filter-btn.active { background: var(--accent-dim); border-color: var(--accent-border); color: var(--accent); }
+
+    .kcl-version {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      padding: 18px 22px;
+      margin-bottom: 12px;
+      transition: border-color 0.15s;
+    }
+    .kcl-version:hover { border-color: var(--border-strong); }
+    .kcl-version-head {
+      display: flex;
+      align-items: baseline;
+      gap: 14px;
+      padding-bottom: 12px;
+      margin-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    .kcl-version-num {
+      font-family: var(--font-display);
+      font-size: 28px;
+      font-weight: 600;
+      color: var(--accent);
+      letter-spacing: -0.02em;
+      line-height: 1;
+      font-variation-settings: 'opsz' 40, 'SOFT' 30;
+    }
+    .kcl-version-date {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-muted);
+      letter-spacing: 0.04em;
+    }
+    .kcl-version-tag {
+      margin-left: auto;
+      font-family: var(--font-mono);
+      font-size: 9.5px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: var(--bg-surface);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+    .kcl-version-source {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--teal);
+      text-decoration: none;
+      border: 1px solid rgba(45,110,99,0.18);
+      padding: 2px 8px;
+      border-radius: 3px;
+      margin-left: 8px;
+    }
+    .kcl-version-source:hover { background: rgba(45,110,99,0.08); }
+    .kcl-version-summary {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.75;
+      padding: 10px 14px;
+      margin-bottom: 14px;
+      background: var(--bg-surface);
+      border-left: 3px solid var(--accent);
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    }
+    .kcl-change-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .kcl-change-item {
+      display: grid;
+      grid-template-columns: 60px 1fr auto;
+      gap: 12px;
+      align-items: baseline;
+      padding: 8px 0;
+      border-bottom: 1px dashed var(--border);
+      font-size: 13px;
+      line-height: 1.7;
+    }
+    .kcl-change-item:last-child { border-bottom: none; }
+    .kcl-change-impact {
+      font-family: var(--font-mono);
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 2px 6px;
+      border-radius: 3px;
+      text-align: center;
+      white-space: nowrap;
+    }
+    .kcl-change-impact.high { color: var(--red); background: rgba(168,51,46,0.08); }
+    .kcl-change-impact.medium { color: var(--accent); background: var(--accent-dim); }
+    .kcl-change-impact.low { color: var(--teal); background: rgba(45,110,99,0.08); }
+    .kcl-change-text { color: var(--text-secondary); }
+    .kcl-change-text strong { color: var(--text); font-weight: 600; }
+    .kcl-change-source {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-muted);
+      text-decoration: none;
+      padding: 2px 8px;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .kcl-change-source:hover { color: var(--accent); border-color: var(--accent-border); }
+
+    .kcl-stats {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+      padding: 14px 18px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    .kcl-stats strong {
+      font-family: var(--font-display);
+      font-size: 20px;
+      color: var(--text);
+      margin-right: 4px;
+      letter-spacing: -0.02em;
+    }
+    .kcl-stats .s-high { color: var(--red); }
+    .kcl-stats .s-medium { color: var(--accent); }
+    .kcl-stats .s-low { color: var(--teal); }
+
+    .kcl-note {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      padding: 20px 22px;
+      margin-bottom: 20px;
+    }
+    .kcl-note + .kcl-note { margin-top: -8px; }
+    .kcl-note-title {
+      font-family: var(--font-display);
+      font-size: 20px;
+      color: var(--text);
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+      margin-bottom: 10px;
+    }
+    .kcl-note-copy {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.8;
+    }
+    .kcl-note-copy p + p { margin-top: 10px; }
+    .kcl-source-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .kcl-source-card {
+      padding: 12px 14px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    .kcl-source-title {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+    .kcl-source-title a {
+      color: inherit;
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+    }
+    .kcl-source-title a:hover {
+      border-bottom-color: var(--accent);
+    }
+    .kcl-source-body {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.75;
+    }
+    .kcl-source-body a,
+    .kcl-step-copy a,
+    .kcl-note-copy a {
+      color: var(--accent);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+    }
+    .kcl-source-body a:hover,
+    .kcl-step-copy a:hover,
+    .kcl-note-copy a:hover {
+      border-bottom-color: var(--accent);
+    }
+    .kcl-source-body strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+    .kcl-step-list {
+      display: grid;
+      gap: 12px;
+      margin-top: 14px;
+    }
+    .kcl-step {
+      padding: 14px 16px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    .kcl-step-title {
+      font-family: var(--font-display);
+      font-size: 18px;
+      color: var(--text);
+      line-height: 1.2;
+      margin-bottom: 8px;
+      letter-spacing: -0.02em;
+    }
+    .kcl-step-copy {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.8;
+    }
+    .kcl-step-copy p + p { margin-top: 8px; }
+    .kcl-output-list {
+      margin: 12px 0 0 18px;
+      color: var(--text-secondary);
+      font-size: 13px;
+      line-height: 1.8;
+    }
+    .kcl-output-list li + li { margin-top: 4px; }
+
+    @media (max-width: 640px) {
+      .kcl-change-item {
+        grid-template-columns: auto 1fr;
+        gap: 8px;
+      }
+      .kcl-change-source {
+        grid-column: 1 / -1;
+        justify-self: start;
+      }
+      .kcl-version-num { font-size: 22px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-wrap">
+    <header class="page-header">
+      <a href="./kernel_upgrade_diff.html" class="page-back">返回差异分析</a>
+      <div class="page-eyebrow">Chromium · Changelog</div>
+      <h1 class="page-title">内核版本<em>变更记录</em></h1>
+      <p class="page-subtitle">M124 → M149 · 每版重大变更 · 官方来源</p>
+    </header>
+
+    <div class="kcl-tabs" role="tablist" aria-label="Kernel changelog tabs">
+      <button type="button" class="kcl-tab active" data-tab="changelog" role="tab" aria-selected="true">发版变更日志</button>
+      <button type="button" class="kcl-tab" data-tab="workflow" role="tab" aria-selected="false">整理规则 / 工作流</button>
+    </div>
+
+    <section class="kcl-panel active" data-panel="changelog">
+      <div class="kcl-stats" id="stats"></div>
+      <div class="kcl-filter" id="filter"></div>
+      <div id="changelogMount"></div>
+    </section>
+
+    <section class="kcl-panel" data-panel="workflow">
+      <section class="kcl-note">
+        <div class="kcl-note-title">来源策略</div>
+        <div class="kcl-note-copy">
+          <p>本页记录的“内核版本变更”采用分层来源方案，不把单一页面误当成完整内核 changelog。</p>
+          <p><strong>Chrome Release Notes</strong> 负责开发者可感知的 Web 平台变化；<strong>Chromium Dash</strong> 负责 milestone 时间线和版本映射；<strong>Chromium Source Log</strong> 负责源码提交区间审计；<strong>AndroidX WebKit</strong> 和 <strong>blink-dev</strong> 负责 Android WebView 特有差异与决策背景。</p>
+        </div>
+        <div class="kcl-source-grid">
+          <article class="kcl-source-card">
+            <div class="kcl-source-title"><a href="https://developer.chrome.com/release-notes/124" target="_blank" rel="noreferrer">Chrome Release Notes</a></div>
+            <div class="kcl-source-body"><strong>用途：</strong>提取 API、CSS、DOM、安全和媒体层的外显变化。<br><strong>限制：</strong>不是 Chromium 源码级变更日志。</div>
+          </article>
+          <article class="kcl-source-card">
+            <div class="kcl-source-title"><a href="https://chromestatus.com/features#milestone=124" target="_blank" rel="noreferrer">ChromeStatus</a></div>
+            <div class="kcl-source-body"><strong>用途：</strong>补充 milestone feature 状态、规范和 issue 链接。<br><strong>限制：</strong>不是提交级变更记录。</div>
+          </article>
+          <article class="kcl-source-card">
+            <div class="kcl-source-title"><a href="https://chromiumdash.appspot.com/schedule" target="_blank" rel="noreferrer">Chromium Dash</a></div>
+            <div class="kcl-source-body"><strong>用途：</strong>确认分支点、稳定版时间和 milestone 对应关系。<br><strong>限制：</strong>不描述详细行为变化。</div>
+          </article>
+          <article class="kcl-source-card">
+            <div class="kcl-source-title"><a href="https://chromium.googlesource.com/chromium/src/" target="_blank" rel="noreferrer">Chromium Source Log</a></div>
+            <div class="kcl-source-body"><strong>用途：</strong>深挖具体 commit 区间和源码变更。<br><strong>限制：</strong>不适合直接面向业务做摘要阅读。</div>
+          </article>
+          <article class="kcl-source-card">
+            <div class="kcl-source-title"><a href="https://developer.android.com/jetpack/androidx/releases/webkit" target="_blank" rel="noreferrer">AndroidX WebKit</a></div>
+            <div class="kcl-source-body"><strong>用途：</strong>记录 WebView 宿主 API、兼容开关和 Jetpack 配套变化。<br><strong>限制：</strong>不能替代 Chromium milestone 主记录。</div>
+          </article>
+          <article class="kcl-source-card">
+            <div class="kcl-source-title"><a href="https://groups.google.com/a/chromium.org/g/blink-dev" target="_blank" rel="noreferrer">blink-dev</a></div>
+            <div class="kcl-source-body"><strong>用途：</strong>补充 CHIPS、WebView 特例等决策背景。<br><strong>限制：</strong>信息分散，适合作为补充来源。</div>
+          </article>
+        </div>
+      </section>
+
+      <section class="kcl-note">
+        <div class="kcl-note-title">版本变更记录工作流</div>
+        <div class="kcl-note-copy">
+          <p>下面的步骤按“版本映射 → 平台变化 → WebView 差异 → 源码核对”的顺序执行，适合人工维护，也适合 AI 按步骤汇总分析。</p>
+        </div>
+        <div class="kcl-step-list">
+          <article class="kcl-step">
+            <div class="kcl-step-title">Step 1：建立版本映射</div>
+            <div class="kcl-step-copy">
+              <p><strong>目标：</strong>确认本次升级跨越了哪些 milestone、stable 时间和版本区间。</p>
+              <p><strong>操作：</strong>先查 <strong>Chromium Dash</strong>，记录 from milestone、to milestone、stable date 和版本映射关系。</p>
+              <p><strong>入口：</strong><a href="https://chromiumdash.appspot.com/schedule" target="_blank" rel="noreferrer">Chromium Dash</a></p>
+            </div>
+          </article>
+          <article class="kcl-step">
+            <div class="kcl-step-title">Step 2：提取平台外显变化</div>
+            <div class="kcl-step-copy">
+              <p><strong>目标：</strong>整理开发者能直接感知到的 API、CSS、DOM、安全、媒体和运行时变化。</p>
+              <p><strong>操作：</strong>遍历目标版本区间内各 milestone 的 <strong>Chrome Release Notes</strong>，只提取对升级评审有价值的 Added / Changed / Deprecated / Removed 项。</p>
+              <p><strong>入口：</strong><a href="https://developer.chrome.com/release-notes/124" target="_blank" rel="noreferrer">Chrome Release Notes</a></p>
+            </div>
+          </article>
+          <article class="kcl-step">
+            <div class="kcl-step-title">Step 3：补充 Feature 状态</div>
+            <div class="kcl-step-copy">
+              <p><strong>目标：</strong>为关键变化补充 feature 状态、规范、issue 和 WebView ship 信息。</p>
+              <p><strong>操作：</strong>用 <strong>ChromeStatus</strong> 校验 milestone、补规范和问题单，避免只看 release notes。</p>
+              <p><strong>入口：</strong><a href="https://chromestatus.com/features#milestone=124" target="_blank" rel="noreferrer">ChromeStatus</a></p>
+            </div>
+          </article>
+          <article class="kcl-step">
+            <div class="kcl-step-title">Step 4：补充 WebView 宿主变化</div>
+            <div class="kcl-step-copy">
+              <p><strong>目标：</strong>把 Android WebView 的宿主 API、兼容开关和 Jetpack 配套变化单独整理出来。</p>
+              <p><strong>操作：</strong>如果目标平台是 Android WebView，检查 <strong>AndroidX WebKit</strong> release notes，提取与 Cookie、拦截请求、导航、缓存、预渲染等相关的宿主变化。</p>
+              <p><strong>入口：</strong><a href="https://developer.android.com/jetpack/androidx/releases/webkit" target="_blank" rel="noreferrer">AndroidX WebKit</a></p>
+            </div>
+          </article>
+          <article class="kcl-step">
+            <div class="kcl-step-title">Step 5：补充 WebView 特例背景</div>
+            <div class="kcl-step-copy">
+              <p><strong>目标：</strong>解释为什么某些行为在 WebView 与 Chrome 不完全一致。</p>
+              <p><strong>操作：</strong>遇到 CHIPS、ship / unship、平台差异决策时，查 <strong>blink-dev</strong>，提炼决策背景而不是整段搬运讨论内容。</p>
+              <p><strong>入口：</strong><a href="https://groups.google.com/a/chromium.org/g/blink-dev" target="_blank" rel="noreferrer">blink-dev</a></p>
+            </div>
+          </article>
+          <article class="kcl-step">
+            <div class="kcl-step-title">Step 6：按需进行源码核对</div>
+            <div class="kcl-step-copy">
+              <p><strong>目标：</strong>在需要追 commit、查根因或补证据链时，再做源码级核对。</p>
+              <p><strong>操作：</strong>只有在 release notes 和 feature 信息不足以说明问题时，才下钻 <strong>Chromium Source Log</strong>，并将其作为证据补充而不是正文主体。</p>
+              <p><strong>入口：</strong><a href="https://chromium.googlesource.com/chromium/src/" target="_blank" rel="noreferrer">Chromium Source Log</a></p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="kcl-note">
+        <div class="kcl-note-title">最终输出结构</div>
+        <div class="kcl-note-copy">
+          <p>完成以上步骤后，最终记录建议固定输出为以下结构，便于长期维护和横向对比：</p>
+          <ol class="kcl-output-list">
+            <li>版本映射</li>
+            <li>关键结论</li>
+            <li>Breaking Changes</li>
+            <li>Security / Privacy</li>
+            <li>WebView Specific</li>
+            <li>New Capabilities</li>
+            <li>Runtime / Performance</li>
+            <li>来源说明</li>
+            <li>维护说明</li>
+          </ol>
+          <p><strong>输出规则：</strong>最终只保留对升级评审有价值的重大变化，不穷举所有提交，也不把单一 release notes 页面误当成完整内核 changelog。</p>
+        </div>
+      </section>
+
+      <section class="kcl-note">
+        <div class="kcl-note-title">维护说明</div>
+        <div class="kcl-note-copy">
+          <p>后续每次升核时，建议按固定顺序维护：先用 <strong>Chromium Dash</strong> 确认 milestone 和时间线，再用 <strong>Chrome Release Notes</strong> 和 <strong>ChromeStatus</strong> 拉平台变化主清单，然后用 <strong>AndroidX WebKit</strong> 与 <strong>blink-dev</strong> 补齐 WebView 特有差异，最后在必要时下钻 <strong>Chromium Source Log</strong> 做源码核对。</p>
+          <p>因此，本页中的每条记录默认代表“对升级评审有价值的重大变化”，而不是穷举所有提交。</p>
+        </div>
+      </section>
+    </section>
+  </div>
+
+  <script>
+    var changelog = [
+      { version: '149', date: '2026-06', summary: '重点：Gap Decorations 上线，普通网页系统色探测被限制到 Web App 场景', changes: [
+        { impact: 'medium', text: '<strong>CSS Gap Decorations 正式进入 stable</strong> — Grid 和 Flexbox 的 gap 可以直接画分隔线（column-rule-inset / row-rule-inset / *-visibility-items），不再需要 border hack 或伪元素拼接。UI 组件库和运营活动页做卡片网格分割线时代码大幅简化。', source: 'https://developer.chrome.com/release-notes/149' },
+        { impact: 'medium', text: '<strong>AccentColor 限制为 Web App 上下文</strong> — CSS 系统强调色关键字（AccentColor / AccentColorText）和 accent-color: auto 仅在 PWA 和初始 profile 上下文中生效，普通网页无法再用来探测系统配色做指纹。依赖系统色变量做主题跟随的 H5 页面需改用 CSS 自定义属性回退。', source: 'https://developer.chrome.com/release-notes/149' },
+        { impact: 'medium', text: '<strong>shape-outside 支持 path() / shape() / rect() / xywh()</strong> — 浮动排斥形状终于能用任意路径定义并动画化，图文混排、杂志式布局、产品展示页的图片环绕效果更自由。', source: 'https://developer.chrome.com/release-notes/149' },
+        { impact: 'low', text: '<strong>table border-color: gray UA 规则移除</strong> — 表格边框不再默认灰色，改为继承 currentColor，对齐 Firefox/WebKit。老页面若依赖默认灰边框需显式声明。', source: 'https://developer.chrome.com/release-notes/149' },
+        { impact: 'low', text: '<strong>image-rendering: crisp-edges</strong> — 与 pixelated 同义标准化，像素风格图片缩放跨浏览器一致。', source: 'https://developer.chrome.com/release-notes/149' }
+      ]},
+      { version: '148', date: '2026-05', summary: '重点：媒体元素支持 lazy loading，首屏视频流量与自动播放链路需重测', changes: [
+        { impact: 'medium', text: '<strong>video / audio 支持 loading="lazy"</strong> — 媒体元素懒加载进入 stable，首屏不在视口的视频不再立刻拉流。对首页有多个视频预览的场景，首屏加载速度和流量消耗显著改善，但要注意自动播放策略与 lazy 的交互。', source: 'https://developer.chrome.com/release-notes/148' },
+        { impact: 'medium', text: '<strong>CSS name-only container queries</strong> — @container 不再需要 container-type，仅凭 container-name 即可匹配。旧代码若同时设了 type + name 不受影响，但新写法更简洁，组件库升级可以少写一行声明。', source: 'https://developer.chrome.com/release-notes/148' },
+        { impact: 'medium', text: '<strong>CSS revert-rule 关键字</strong> — 样式可以回退到前一条同选择器规则的值，配合 if() 条件函数做条件降级时非常有用。', source: 'https://developer.chrome.com/release-notes/148' },
+        { impact: 'medium', text: '<strong>@supports at-rule() 检测</strong> — CSS 原生可以检测浏览器是否支持某个 at-rule（如 @container、@layer），渐进增强更精确。', source: 'https://developer.chrome.com/release-notes/148' },
+        { impact: 'medium', text: '<strong>Manifest localization</strong> — PWA manifest 支持多语言字段，浏览器自动匹配用户语言展示应用名称/描述/图标。', source: 'https://developer.chrome.com/release-notes/148' },
+        { impact: 'low', text: '<strong>OpenFont avar2 文本塑形与渲染</strong> — 可变字体轴间联动（一个轴可控制另一个轴），字体文件更小，排版更精确。', source: 'https://developer.chrome.com/release-notes/148' },
+        { impact: 'low', text: '<strong>drag dropEffect 规范对齐</strong> — dragEnter / dragOver / dragLeave 事件的 dataTransfer.dropEffect 严格按规范赋值，原来依赖旧行为的拖拽库需回归。', source: 'https://developer.chrome.com/release-notes/148' }
+      ]},
+      { version: '147', date: '2026-04', summary: '重点：局部 View Transition 与伪元素编程上线，组件动画实现方式改变', changes: [
+        { impact: 'medium', text: '<strong>Element-scoped View Transitions</strong> — element.startViewTransition() 可在任意 HTML 元素上发起局部过渡动画，多个过渡可并行运行。组件级动画不再需要全局 document.startViewTransition()。', source: 'https://developer.chrome.com/release-notes/147' },
+        { impact: 'medium', text: '<strong>CSS contrast-color()</strong> — 自动计算与给定颜色对比度最高的黑或白，做无障碍配色更简单。', source: 'https://developer.chrome.com/release-notes/147' },
+        { impact: 'medium', text: '<strong>CSS border-shape</strong> — 边框可以是任意形状（polygon / circle / shape()），不再局限于圆角矩形。对异形按钮、对话气泡、徽章等 UI 组件是重大能力升级。', source: 'https://developer.chrome.com/release-notes/147' },
+        { impact: 'medium', text: '<strong>CSSPseudoElement 接口</strong> — JS 可以通过 element.pseudo("::after") 获取伪元素引用并操作，支持事件 pseudoTarget。低代码编辑器和动画库的精确度大幅提升。', source: 'https://developer.chrome.com/release-notes/147' },
+        { impact: 'low', text: '<strong>border-width / outline-width 解耦 *-style</strong> — *-style: none 不再把 computed width 强制为 0，对齐 Firefox/WebKit 行为。涉及动态切换 border-style 的动画可能表现不同。', source: 'https://developer.chrome.com/release-notes/147' }
+      ]},
+      { version: '146', date: '2026-03', summary: '重点：滚动驱动动画正式稳定，旧 JS 滚动动画方案需评估替换与冲突', changes: [
+        { impact: 'high', text: '<strong>Scroll-triggered Animations 进入 stable</strong> — CSS 滚动位置可声明式触发和控制动画（timeline-trigger / animation-trigger），大量基于 IntersectionObserver + JS 的滚动动画可改为纯 CSS 实现。性能更好、代码更少，但原有 JS 方案需评估是否共存冲突。', source: 'https://developer.chrome.com/release-notes/146' },
+        { impact: 'medium', text: '<strong>Scoped Custom Element Registry</strong> — 同一 tag name 可以在不同 shadow root 注册不同定义，解决微前端和组件库的命名冲突。对 WebView 内嵌多个独立 H5 模块的场景意义重大。', source: 'https://developer.chrome.com/release-notes/146' },
+        { impact: 'medium', text: '<strong>meta name="text-scale"</strong> — 页面可声明遵循系统文字缩放设置，浏览器不再强制全页缩放。无障碍合规和大字体适配的标准做法。', source: 'https://developer.chrome.com/release-notes/146' },
+        { impact: 'medium', text: '<strong>WebGPU Compatibility Mode</strong> — WebGPU 可 fallback 到 OpenGL ES / Direct3D 11，覆盖更多不支持 Vulkan/Metal 的旧设备。对 Android WebView 的 GPU 兼容性有直接影响。', source: 'https://developer.chrome.com/release-notes/146' },
+        { impact: 'low', text: '<strong>CSS trigger-scope 属性</strong> — 限制动画触发器名称的作用域，防止全局命名冲突。', source: 'https://developer.chrome.com/release-notes/146' }
+      ]},
+      { version: '145', date: '2026-02', summary: '重点：UA 字符串默认降熵，设备识别与服务端分流必须迁移到 UA-CH', changes: [
+        { impact: 'high', text: '<strong>Reduced User-Agent strings 默认启用</strong> — UA 字符串精简为低熵格式，依赖完整 UA 做设备判断、版本解析、服务端分流的逻辑可能失效。需改用 User-Agent Client Hints。', source: 'https://developer.chrome.com/release-notes/145' },
+        { impact: 'high', text: '<strong>Device Bound Session Credentials</strong> — 会话绑定设备硬件密钥，cookie 被窃取后无法跨设备重放。对登录安全是利好，但 cookie 同步和多设备调试场景会受影响。', source: 'https://developer.chrome.com/release-notes/145' },
+        { impact: 'medium', text: '<strong>Local Network Access 分拆权限</strong> — 局域网访问需独立权限授予，不再跟随通用网络权限。配网、内网控制台、设备管理页面需适配。', source: 'https://developer.chrome.com/release-notes/145' },
+        { impact: 'medium', text: '<strong>Customizable select listbox</strong> — select 下拉框可完全自定义 HTML 结构和 CSS 样式，告别平台原生样式限制。', source: 'https://developer.chrome.com/release-notes/145' },
+        { impact: 'medium', text: '<strong>Origin API</strong> — 新增 Origin 对象封装同源比较逻辑，减少手写字符串解析的安全漏洞。', source: 'https://developer.chrome.com/release-notes/145' },
+        { impact: 'medium', text: '<strong>CSS column-wrap / column-height</strong> — 多列布局支持竖向换行到新行。', source: 'https://developer.chrome.com/release-notes/145' },
+        { impact: 'low', text: '<strong>IndexedDB: SQLite backend（内存上下文）</strong> — 内存数据库使用 SQLite 后端实现。', source: 'https://developer.chrome.com/release-notes/145' }
+      ]},
+      { version: '144', date: '2026-01', summary: '重点：Shared Storage 与 Private Aggregation 移除，隐私归因方案必须改造', changes: [
+        { impact: 'high', text: '<strong>Shared Storage API 废弃并移除</strong> — 依赖 Shared Storage 做跨站数据共享的方案彻底失效，需迁移到其他隐私保护 API。', source: 'https://developer.chrome.com/release-notes/144' },
+        { impact: 'high', text: '<strong>Private Aggregation API 废弃并移除</strong> — 隐私聚合报告能力移除，广告归因和隐私统计需寻找替代方案。', source: 'https://developer.chrome.com/release-notes/144' },
+        { impact: 'high', text: '<strong>Temporal API 进入 stable</strong> — 全新日期时间 API（替代 Date），ZonedDateTime / PlainDate 等类型行为与 Moment.js / dayjs 不同，需注意 polyfill 冲突。', source: 'https://developer.chrome.com/release-notes/144' },
+        { impact: 'medium', text: '<strong>clipboardchange 事件</strong> — 剪贴板内容变化可监听，需 sticky user activation。密码管理器和富文本编辑器可利用此能力。', source: 'https://developer.chrome.com/release-notes/144' },
+        { impact: 'medium', text: '<strong>CSS find-in-page highlight pseudos</strong> — 浏览器内置查找高亮可通过 CSS 自定义样式，不再是固定黄底。', source: 'https://developer.chrome.com/release-notes/144' },
+        { impact: 'medium', text: '<strong>View Transitions waitUntil()</strong> — 视图过渡新增等待方法，可延迟过渡完成直到异步操作结束。', source: 'https://developer.chrome.com/release-notes/144' },
+        { impact: 'low', text: '<strong>XML 外部实体解析移除</strong> — 安全加固，externally loaded entities 不再加载，依赖 DTD 外部引用的老 XML 解析会失败。', source: 'https://developer.chrome.com/release-notes/144' }
+      ]},
+      { version: '143', date: '2025-12', summary: '重点：XSLT 进入废弃流程，老 XML 展示链路需尽快迁移避免后续断裂', changes: [
+        { impact: 'high', text: '<strong>XSLT 开始废弃流程</strong> — 安全风险高且使用率低，开始 deprecation。依赖 XSLT 做服务端 XML 转换展示的老系统需尽快迁移。', source: 'https://developer.chrome.com/release-notes/143' },
+        { impact: 'medium', text: '<strong>WebRTC RTP header extension 行为变更</strong> — RTP 扩展协商逻辑调整，自定义 RTC 方案可能需要适配。', source: 'https://developer.chrome.com/release-notes/143' },
+        { impact: 'medium', text: '<strong>ICU 77 / Unicode 16</strong> — 字符集升级，新增 emoji 和 CJK 字符，渲染和文本测量可能变化。', source: 'https://developer.chrome.com/release-notes/143' },
+        { impact: 'medium', text: '<strong>CSS anchored fallback container queries</strong> — @container anchored(fallback) 可按锚定定位 fallback 状态设置样式。', source: 'https://developer.chrome.com/release-notes/143' },
+        { impact: 'low', text: '<strong>Intl Locale Info getters 废弃</strong> — 需改用方法调用形式（如 .getCalendars() 替代 .calendars）。', source: 'https://developer.chrome.com/release-notes/143' }
+      ]},
+      { version: '142', date: '2025-10', summary: '重点：私网访问升级为强制权限，所有局域网设备控制页面必须适配授权', changes: [
+        { impact: 'high', text: '<strong>Local Network Access 正式要求权限许可</strong> — 私网访问从警告升级为强制权限，未授权请求直接拒绝。所有访问局域网设备的 H5 页面必须适配。', source: 'https://developer.chrome.com/release-notes/142' },
+        { impact: 'medium', text: '<strong>JSON MIME 严格校验</strong> — *+json 类型 token 校验收紧，非法 MIME 的 JSON module 导入会失败。', source: 'https://developer.chrome.com/release-notes/142' },
+        { impact: 'medium', text: '<strong>Interest Invokers (interestfor 属性)</strong> — 新增悬停/聚焦触发器属性，可自动展示 popover。', source: 'https://developer.chrome.com/release-notes/142' },
+        { impact: 'medium', text: '<strong>select 元素渲染跨平台统一</strong> — 移动端与桌面端 select 渲染模式对齐，外观可能变化。', source: 'https://developer.chrome.com/release-notes/142' },
+        { impact: 'low', text: '<strong>CSS if() range syntax</strong> — style container queries 支持范围比较语法（>、< 等）。', source: 'https://developer.chrome.com/release-notes/142' }
+      ]},
+      { version: '141', date: '2025-09', summary: '重点：Storage Access 回归同源语义，跨子域 iframe 登录链路必须重验', changes: [
+        { impact: 'high', text: '<strong>Storage Access API 严格回到 same-origin 语义</strong> — iframe 调用 document.requestStorageAccess() 后，默认只会给自身 origin 附带 Cookie，不再按站点级别放宽。依赖跨子域单点登录、广告归因或老式嵌入鉴权的业务需要重新核对登录链路，否则升级后可能出现 iframe 已展示但接口仍未登录的情况。', source: 'https://developer.chrome.com/release-notes/141' },
+        { impact: 'high', text: '<strong>本地网络访问限制正式推进到权限模型</strong> — 页面访问路由器、摄像头、打印机、工控设备等局域网资源时，将逐步要求安全上下文和用户授权。对企业门户、内网 H5 控制台、嵌入式 WebView 配网页来说，这意味着原本静默可用的 HTTP 调用会开始被拦截或弹权限提示。', source: 'https://developer.chrome.com/release-notes/141' },
+        { impact: 'medium', text: '<strong>IndexedDB 新增 getAllRecords()</strong> — IndexedDB 现在可以一次性拿到主键、索引键和记录值，替代手写 cursor 循环。对离线列表、消息缓存、富文本草稿箱这类大量本地数据读取场景，代码会更简洁，首屏恢复和批量同步的耗时也更容易降下来。', source: 'https://developer.chrome.com/release-notes/141' },
+        { impact: 'high', text: '<strong>Signature-based Integrity 引入签名级依赖校验</strong> — 服务器可用 Ed25519 对响应签名，浏览器按公钥验证资源是否来自可信发布方。它适合给 CDN、脚本分发、第三方依赖做来源证明，能降低供应链被替换时前端无感中招的风险，但也要求构建和发布链路补齐签名管理。', source: 'https://developer.chrome.com/release-notes/141' },
+        { impact: 'medium', text: '<strong>WebRTC Encoded Transform V2 与现行规范对齐</strong> — 对编码后音视频帧做加密、水印、背景模糊前处理的接口语义更新，Chrome 与 Safari、Firefox 的差异进一步缩小。做实时音视频特效、端到端加密或自定义编解码管线的业务，应该尽快验证旧版 transform 代码是否仍按预期工作。', source: 'https://developer.chrome.com/release-notes/141' },
+        { impact: 'medium', text: '<strong>ARIA Notify 提供更稳定的读屏播报接口</strong> — 开发者可以直接通过 JavaScript 通知辅助技术朗读内容，而不必完全依赖 live region 的 DOM 变更时机。对客服台、交易播报、表单校验、消息中心等动态界面，这能明显减少“视觉已更新但读屏没念出来”的无障碍问题。', source: 'https://developer.chrome.com/release-notes/141' },
+        { impact: 'medium', text: '<strong>Digital Credentials API 增强真实身份凭证展示能力</strong> — 网站可以通过标准化接口向移动钱包请求数字证件，而不是继续依赖二维码、深链或私有 App 协议。做实名校验、票证核身、金融开户的业务可期待链路更统一，但也要同步评估 Android 凭证钱包接入、风控校验和合规文案。', source: 'https://developer.chrome.com/release-notes/141' },
+        { impact: 'medium', text: '<strong>Navigation API 增加 precommitHandler</strong> — 拦截导航时可以在真正提交前异步决定 URL、history 行为和附带信息，不再只能在提交后补救。对单页应用路由守卫、A/B 重写、登录跳转和埋点打点来说，导航状态更可控，但路由框架若直接假定 URL 先变更再处理，可能需要适配。', source: 'https://developer.chrome.com/release-notes/141' },
+        { impact: 'medium', text: '<strong>No-Vary-Search 进入磁盘缓存</strong> — 带追踪参数但页面内容相同的 URL 现在可以复用 HTTP 磁盘缓存，而不是每次都重新拉取。电商投放页、活动页、SEO 落地页如果已经规范声明哪些 query 不影响内容，将能减少回访流量和冷加载等待时间。', source: 'https://developer.chrome.com/release-notes/141' },
+        { impact: 'low', text: '<strong>移除旧的 Purpose: prefetch 请求头</strong> — 预取与预渲染将统一使用 Sec-Purpose，而旧的 Purpose: prefetch 逐步退出。服务端若还靠这个老头部做流量分流、白名单放行或日志识别，需要补上新头部判断，否则会误以为预取流量“突然消失”。', source: 'https://developer.chrome.com/release-notes/141' },
+        { impact: 'low', text: '<strong>getComputedStyle() 现在会正确枚举自定义属性</strong> — 之前 Chrome 遍历计算样式时会漏掉元素上的 CSS 变量，导致依赖 length 和索引访问的工具结果不完整。设计系统调试面板、低代码样式检查器和 WebView 内嵌主题编辑器在升级后会拿到更准确的数据。', source: 'https://developer.chrome.com/release-notes/141' }
+      ]},
+      { version: '140', date: '2025-09', summary: '重点：私网访问和 Cookie 前缀继续收紧，设备控制与登录态配置都要复查', changes: [
+        { impact: 'high', text: '<strong>本地网络访问限制继续收紧</strong> — 对私网目标的请求会进一步绑定安全上下文与权限策略，浏览器不再默认信任任意网页访问局域网设备。做扫码配网、网关管理、门店设备控制的 H5 或 WebView 页面，必须提早梳理 HTTPS、权限提示和失败兜底体验。', source: 'https://developer.chrome.com/release-notes/140' },
+        { impact: 'high', text: '<strong>HTTP Cookie 前缀约束继续强化</strong> — __Secure- 和 __Host- 前缀的校验更严格，有助于提前暴露不安全或配置不完整的 Cookie 写法。对登录态、风控票据、跨端回流埋点而言，这是减少误配和会话泄漏的好事，但老服务端若前缀名写了却没满足条件，会在新版本里直接失效。', source: 'https://developer.chrome.com/release-notes/140' },
+        { impact: 'medium', text: '<strong>overscroll-behavior 事件传播源调整</strong> — 滚动链末端的触发来源更符合规范，嵌套滚动容器与页面根节点之间的回弹抑制行为会更一致。自定义下拉刷新、抽屉面板、长列表嵌套评论区等场景，原来依赖 Chrome 旧行为的手势逻辑需要回归验证。', source: 'https://developer.chrome.com/release-notes/140' },
+        { impact: 'medium', text: '<strong>Uint8Array 原生支持 Base64 与十六进制互转</strong> — 二进制数据与文本编码转换不必再依赖大量手写工具函数或第三方库。做文件上传、端到端加密、签名串拼接和 WebView 桥接传输时，代码更短且更不容易在边界字符上出错。', source: 'https://developer.chrome.com/release-notes/140' },
+        { impact: 'medium', text: '<strong>View Transition 支持嵌套伪元素树</strong> — 复杂组件的过渡动画可以更细粒度地映射到层级化伪元素，而不是只能做平面截图式切换。对商品卡片列表、图库、富交互运营页来说，转场质量会更高，但原有动画 CSS 若假定只有单层伪元素，也要做兼容检查。', source: 'https://developer.chrome.com/release-notes/140' },
+        { impact: 'medium', text: '<strong>highlightsFromPoint() 提供命中高亮范围查询</strong> — 页面可以更方便地知道某个坐标点落在了哪些 Highlight API 高亮区域上。做全文检索、批注评论、AI 摘要高亮、阅读器划词交互的产品，命中计算会更可靠，也减少自行维护矩形区域的复杂度。', source: 'https://developer.chrome.com/release-notes/140' },
+        { impact: 'medium', text: '<strong>scrollIntoView() 新增 container 选项</strong> — 开发者可指定只滚动最近容器还是沿祖先链逐层滚动，解决组件库里“一个定位操作把整页也带着滚走”的老问题。表单校验定位、对话框内部导航、WebView 内嵌长页跳点会因此更可控。', source: 'https://developer.chrome.com/release-notes/140' },
+        { impact: 'low', text: '<strong>ToggleEvent 增加 source 属性</strong> — dialog、popover 等开关事件现在能告诉你究竟是谁触发了本次状态变化。对埋点分析、交互归因和复杂控件联动来说，这能减少手动记录触发源的样板代码。', source: 'https://developer.chrome.com/release-notes/140' },
+        { impact: 'low', text: '<strong>@font-face 支持 font-variation-settings</strong> — 可变字体的轴值能够直接在字体声明阶段配置，而不是完全依赖运行时样式。品牌字重、数字字体、阅读模式字宽调节会更稳定，尤其适合一套字体覆盖多个视觉层级的设计系统。', source: 'https://developer.chrome.com/release-notes/140' }
+      ]},
+      { version: '139', date: '2025-08', summary: '重点：window.name 跨站清空且 WebGL 软件兜底移除，老跳转传参与低配图形需排雷', changes: [
+        { impact: 'medium', text: '<strong>CSS @function 让样式层可以定义可复用函数</strong> — 复杂设计系统中的尺寸换算、颜色派生和主题逻辑不必全部退回到预处理器或运行时 JavaScript。对多品牌皮肤、低代码样式模板和组件库而言，维护成本会下降，但也要关注函数滥用带来的可读性问题。', source: 'https://developer.chrome.com/release-notes/139' },
+        { impact: 'high', text: '<strong>window.name 跨站跳转后自动清空</strong> — 这个历史上常被拿来跨站传值和做追踪的共享容器，在跨站导航后不再保留旧数据。依赖 window.name 在支付跳转、登录回调、营销落地页间传参的老代码会直接断链，必须改成 URL、postMessage 或存储方案。', source: 'https://developer.chrome.com/release-notes/139' },
+        { impact: 'high', text: '<strong>移除基于 SwiftShader 的 WebGL 兜底路径</strong> — 没有可用 GPU 时，部分环境不再自动回退到软件渲染的 WebGL 实现。数据可视化、3D 看板、地图引擎和离屏特效在受限设备、虚拟机或某些 WebView 容器里，可能从“慢但能跑”变成直接不可用。', source: 'https://developer.chrome.com/release-notes/139' },
+        { impact: 'medium', text: '<strong>CSS corner-shape 与 squircle 形状进入平台</strong> — 圆角不再只有统一的 border-radius，设计可以更接近系统卡片与品牌视觉里的连续曲线。对追求原生感的组件库和活动页 UI 是利好，但如果业务靠图片切角或 SVG 蒙版实现同类效果，可能有简化重构空间。', source: 'https://developer.chrome.com/release-notes/139' },
+        { impact: 'medium', text: '<strong>Accept-Language 继续收缩以降低指纹识别能力</strong> — 请求头暴露的语言细节更少，能减少被用来拼装用户指纹。多语言站点若以前拿长语言列表做精细化分流，现在应该改为显式语言设置、用户选择或服务端回退策略，而不是假设浏览器会给足信息。', source: 'https://developer.chrome.com/release-notes/139' },
+        { impact: 'medium', text: '<strong>设备端 Web Speech API 提升本地语音处理能力</strong> — 某些识别和处理流程可在设备端完成，降低网络依赖与隐私暴露。客服语音输入、会议纪要、搜索框语音交互会因此得到更稳定的弱网体验，但也要考虑端侧模型能力与设备差异。', source: 'https://developer.chrome.com/release-notes/139' },
+        { impact: 'high', text: '<strong>Android 后台标签页约 1 分钟后更积极冻结</strong> — 浏览器会更快暂停后台页面的定时器和部分执行活动，以节能和控温。音乐伴随页、后台轮询、保活心跳和依赖前台以外持续执行的 WebView 页面都需要确认是否会被提前挂起。', source: 'https://developer.chrome.com/release-notes/139' },
+        { impact: 'medium', text: '<strong>CSP 阻止 Worker 因策略拦截再额外触发 error 事件</strong> — 某些被内容安全策略拒绝的 Worker 场景将不再出现重复或误导性的错误回调。监控系统和容错代码会拿到更干净的信号，但如果业务逻辑曾依赖旧的 error 事件兜底，就要调整检测方式。', source: 'https://developer.chrome.com/release-notes/139' },
+        { impact: 'low', text: '<strong>font-feature-settings 与 font-width 能力增强</strong> — 字体细节控制与字宽调节更容易标准化使用。对排版要求高的资讯、出版、金融报表和品牌官网而言，可以减少依赖私有字体 hack 的必要性。', source: 'https://developer.chrome.com/release-notes/139' }
+      ]},
+      { version: '138', date: '2025-06', summary: '重点：HTML 序列化强化防 mXSS，Integrity-Policy 上线后资源治理要前移', changes: [
+        { impact: 'medium', text: '<strong>Translator、LanguageDetector、Summarizer 等 AI API 进入平台能力层</strong> — 浏览器开始提供统一的端侧语言识别、翻译和摘要接口，业务可以先以能力检测方式接入，而不是把所有 AI 交互都绑死在第三方 SDK。对阅读器、客服工作台、跨语种搜索和信息流摘要尤其有用，但要预留模型不可用时的退化路径。', source: 'https://developer.chrome.com/release-notes/138' },
+        { impact: 'high', text: '<strong>HTML 属性序列化会转义尖括号以缓解 mXSS</strong> — 浏览器在把 DOM 再序列化成 HTML 时对危险字符更谨慎，可减少某些 mutation XSS 链路被意外重新激活。做富文本编辑器、模板保存、可视化搭建和服务端回填 HTML 的业务，升级后安全性更高，但测试快照输出会与旧版本略有不同。', source: 'https://developer.chrome.com/release-notes/138' },
+        { impact: 'high', text: '<strong>Integrity-Policy 请求头提供更强的资源完整性治理</strong> — 站点可以声明哪些外部资源必须满足完整性要求，避免脚本、样式或关键依赖被无声篡改。大型站点、金融页面和企业门户能把供应链安全前移到浏览器层，但上线前必须先把资源清单和构建产物管理规范化。', source: 'https://developer.chrome.com/release-notes/138' },
+        { impact: 'medium', text: '<strong>Service Worker 开始支持 Speculation Rules Prefetch</strong> — 预取资源与离线缓存、鉴权逻辑之间的关系更一致，不再总是绕开现有 SW 管线。对已重度使用 Workbox、离线包和精细缓存策略的应用是好事，但如果你刻意把预取流量与正式请求区分处理，需要复核命中逻辑。', source: 'https://developer.chrome.com/release-notes/138' },
+        { impact: 'medium', text: '<strong>CSS stretch 关键字标准化替代历史私有写法</strong> — 布局层可以用更规范的方式表达可拉伸尺寸，减少继续依赖 -webkit-fill-available 的必要性。对移动端全高容器、侧边栏和沉浸式页面来说，这是一次渐进清理私有 CSS 的机会。', source: 'https://developer.chrome.com/release-notes/138' },
+        { impact: 'low', text: '<strong>sibling-index() 与 sibling-count() 补齐 CSS 结构感知能力</strong> — 样式可以直接知道当前元素在同级中的位置和总数，不必总靠脚本打 class。瀑布流、时间轴、列表序号、运营卡片分隔线等界面会更容易纯 CSS 实现。', source: 'https://developer.chrome.com/release-notes/138' },
+        { impact: 'medium', text: '<strong>WebCodecs 补充视频帧方向信息</strong> — 视频处理链路可以更准确获知旋转与镜像方向，减少拍摄端、录制端、播放端各自猜测导致的方向错乱。短视频拍摄、直播推流和视频消息编辑器升级后会更容易统一横竖屏表现。', source: 'https://developer.chrome.com/release-notes/138' },
+        { impact: 'high', text: '<strong>MSE 异步范围移除废弃继续推进</strong> — 围绕 SourceBuffer 异步行为和老旧非标调用的兼容空间被进一步压缩。做自研播放器、分片拼接、广告插播和 DRM 包装的团队应尽快回归测试，否则某些在旧核“能跑”的边缘写法会逐步变成异常或静默失败。', source: 'https://developer.chrome.com/release-notes/138' },
+        { impact: 'low', text: '<strong>CSS progress() 函数提供更直接的区间映射能力</strong> — 开发者可以在样式层表达某个值在区间中的进度比例，减少大量 JS 计算样式变量的样板代码。进度条、滚动驱动动画、曝光权重视觉化和图表渐变都会更好写。', source: 'https://developer.chrome.com/release-notes/138' },
+        { impact: 'medium', text: '<strong>env(preferred-text-scale) 让页面感知用户文字缩放偏好</strong> — 页面可以更好适配系统级大字体，而不是只依赖粗糙的 viewport 缩放。资讯、政务、医疗和长辈模式页面在 WebView 中也更容易做到真正可读，而不是出现截断与重叠。', source: 'https://developer.chrome.com/release-notes/138' }
+      ]},
+      { version: '137', date: '2025-05', summary: '重点：Blob URL 开始分区，跨窗口/iframe 文件预览与下载桥接要重测', changes: [
+        { impact: 'high', text: '<strong>Blob URL 开始分区</strong> — blob: URL 不再天然可在不同站点上下文间复用，浏览器会把它与创建上下文绑定得更紧。跨 iframe、跨窗口或通过 WebView 宿主中转 blob 资源的老代码，升级后更容易出现图片、下载链接、预览文件无法打开的问题。', source: 'https://developer.chrome.com/release-notes/137' },
+        { impact: 'high', text: '<strong>Document-Isolation-Policy 提供更强文档隔离</strong> — 页面可以请求更严格的隔离级别，减少与跨源内容共享进程或状态带来的风险。对金融、办公、协同编辑和需要高可信执行环境的业务，这是安全加强项，但嵌入第三方内容时也要评估兼容约束。', source: 'https://developer.chrome.com/release-notes/137' },
+        { impact: 'medium', text: '<strong>HSTS 追踪防护继续收紧</strong> — 浏览器降低站点利用 HSTS 状态做跨站持久标记的空间。安全角度是好事，但依赖特殊跳转探测 HSTS 状态的兼容代码、诊断页或灰度脚本，可能会看到与旧版本不同的结果。', source: 'https://developer.chrome.com/release-notes/137' },
+        { impact: 'medium', text: '<strong>CSS reading-flow 与 reading-order 控制阅读顺序</strong> — 视觉顺序和辅助技术、键盘焦点顺序之间可以更精确地协调，减少复杂 Grid/Flex 布局“看起来在这，焦点却跑到别处”的问题。表单、卡片墙和可访问性要求高的后台系统应优先关注。', source: 'https://developer.chrome.com/release-notes/137' },
+        { impact: 'medium', text: '<strong>CSS if() 把条件分支带进样式值</strong> — 一部分简单的主题切换、状态样式和响应逻辑能直接在 CSS 中完成。它不会立刻取代 JS，但确实能让组件库减少“为了改个样式还要写脚本”的负担。', source: 'https://developer.chrome.com/release-notes/137' },
+        { impact: 'medium', text: '<strong>WebAssembly JSPI 改善 Wasm 与异步 JavaScript 互操作</strong> — Wasm 模块在面对 Promise、异步 I/O 和宿主回调时的桥接成本更低。使用 Wasm 做图像处理、音视频编解码、规则引擎或游戏逻辑的业务，未来会更容易把重计算与 Web API 混合使用。', source: 'https://developer.chrome.com/release-notes/137' },
+        { impact: 'high', text: '<strong>Web Crypto 支持 Ed25519</strong> — 浏览器原生可用现代签名算法，前端签名、验签、钱包交互和凭证体系不必总靠第三方库兜底。对性能和包体积都是正向变化，但也意味着现有安全组件可以考虑逐步升级算法栈。', source: 'https://developer.chrome.com/release-notes/137' },
+        { impact: 'medium', text: '<strong>Selection.getComposedRanges() 改善 Shadow DOM 选区处理</strong> — 复杂组件内部的真实选区信息更容易获取，不再总被组件边界割裂。富文本编辑器、代码编辑器、批注系统和 AI 划词入口在 Web Components 架构里会更好做。', source: 'https://developer.chrome.com/release-notes/137' },
+        { impact: 'medium', text: '<strong>view-transition-name: match-element 简化批量转场绑定</strong> — 列表、网格中的多个元素可以更自动地参与视图过渡，不必每个节点都手写唯一名称。对商品流、相册、消息列表等场景，可显著减少转场模板代码。', source: 'https://developer.chrome.com/release-notes/137' },
+        { impact: 'low', text: '<strong>Canvas 引入浮点颜色支持</strong> — 更高精度的颜色数据让 HDR、图像处理和专业绘制场景有了更好的基础。普通业务短期感知不强，但图片编辑器、滤镜处理和媒体 WebApp 会从中受益。', source: 'https://developer.chrome.com/release-notes/137' }
+      ]},
+      { version: '136', date: '2025-05', summary: '重点：:visited 与缓存继续分区，隐私增强同时会改变跨站缓存命中模型', changes: [
+        { impact: 'high', text: '<strong>:visited 历史状态开始按顶级站点分区</strong> — 链接是否访问过不再反映用户全局浏览历史，而是受当前顶级站点隔离。依赖 visited 样式做阅读进度、跨站导购提示或行为推断的页面会看到结果变少，但这对隐私保护是明显增强。', source: 'https://developer.chrome.com/release-notes/136' },
+        { impact: 'high', text: '<strong>HTTP 缓存分区引入导航发起者维度</strong> — 相同资源即使 URL 一致，也会因为导航上下文不同而减少跨站共享缓存。这样可以降低缓存被当作跨站侧信道的风险，但首开成本和缓存命中率模型会变化，CDN 与性能评估要相应调整。', source: 'https://developer.chrome.com/release-notes/136' },
+        { impact: 'medium', text: '<strong>WebRTC 支持 H.265 HEVC</strong> — 实时视频在带宽敏感场景下有更多高压缩率选择，尤其适合移动端高清视频和部分硬件编解码友好的设备。企业会议、远程看护、直播连麦可从中受益，但要注意终端兼容与授权成本。', source: 'https://developer.chrome.com/release-notes/136' },
+        { impact: 'medium', text: '<strong>AudioContext 新增 interrupted 状态</strong> — 音频上下文能够明确表示自己是被系统、设备切换或外部事件打断，而不只是笼统地停止。做播放器、语音通话、白噪音和游戏音效的团队，可以更准确判断何时恢复、何时提示用户。', source: 'https://developer.chrome.com/release-notes/136' },
+        { impact: 'high', text: '<strong>WebAuthn 支持条件式创建 Passkey</strong> — 不必强制弹出全屏流程，就能在更自然的表单体验中引导用户创建通行密钥。登录注册一体化、设备绑定和弱密码替代流程会更顺滑，是账号安全和转化率同时受益的一项能力。', source: 'https://developer.chrome.com/release-notes/136' },
+        { impact: 'medium', text: '<strong>FedCM 支持多身份提供方选择</strong> — 一个站点可以更标准地对接多个 IdP，而不是自己维护大量跨站登录弹层。对于聚合登录、企业账号与个人账号并存的平台，接入复杂度会下降，但账号选择文案和埋点逻辑需要更新。', source: 'https://developer.chrome.com/release-notes/136' },
+        { impact: 'medium', text: '<strong>Captured Surface Control 提升被捕获画面的控制能力</strong> — 屏幕共享发起方可更细粒度管理被共享内容的交互和展示。在线会议、远程协作、云桌面和教学场景能获得更安全的共享体验，特别适合 WebView 宿主内嵌会议页。', source: 'https://developer.chrome.com/release-notes/136' },
+        { impact: 'medium', text: '<strong>MediaRecorder 扩展到 H26x 录制链路</strong> — 浏览器原生录屏、录制会议和视频留言功能在编码格式上更灵活，便于接入已有媒体处理流水线。对依赖后端统一收 MP4/H26x 的平台，这能减少转码压力。', source: 'https://developer.chrome.com/release-notes/136' },
+        { impact: 'low', text: '<strong>RegExp.escape() 让动态正则拼接更安全</strong> — 用户输入、配置项或外部字段名在拼入正则前终于有了标准转义方式。搜索高亮、规则引擎、日志筛选和低代码表达式系统能少踩很多转义边界坑。', source: 'https://developer.chrome.com/release-notes/136' },
+        { impact: 'medium', text: '<strong>Accept-Language 继续精简</strong> — 浏览器对外暴露的语言偏好更克制，有助于降低指纹唯一性。国际化站点如果仍把详细语言链当作主要分发依据，应尽快转向显式设置或服务端协商回退。', source: 'https://developer.chrome.com/release-notes/136' }
+      ]},
+      { version: '135', date: '2025-04', summary: '重点：MutationEvent 最终移除，所有旧 DOM 监听必须立刻迁移 MutationObserver', changes: [
+        { impact: 'high', text: '<strong>MutationEvent 被最终移除</strong> — DOMNodeInserted、DOMSubtreeModified 等古老事件结束兼容生命周期，继续监听它们将拿不到结果。老富文本编辑器、埋点 SDK、广告脚本和部分低代码运行时要立刻迁移到 MutationObserver，否则关键联动会静默失效。', source: 'https://developer.chrome.com/release-notes/135' },
+        { impact: 'high', text: '<strong>Blob URL 分区化继续落地</strong> — blob: 资源的可见范围更严格地跟随创建上下文，不再适合被当成跨上下文通用引用。下载中心、图片预览、拍照上传和 App 宿主与 WebView 之间的文件桥接都应检查是否存在跨上下文复用。', source: 'https://developer.chrome.com/release-notes/135' },
+        { impact: 'medium', text: '<strong>HSTS 追踪防护继续加强</strong> — 浏览器进一步压缩利用 HSTS 作为跨站标记位的空间。对普通站点几乎没有开发成本，但某些用 HSTS 探测结果做诊断或回退的逻辑可能需要重写。', source: 'https://developer.chrome.com/release-notes/135' },
+        { impact: 'medium', text: '<strong>Invoker Commands 统一声明式触发命令</strong> — 元素可以通过标准属性驱动对话框、弹层等目标执行命令，而不必总写自定义点击脚本。组件库和运营搭建页会因此更易配置化，也有助于减少行为和样式混杂。', source: 'https://developer.chrome.com/release-notes/135' },
+        { impact: 'medium', text: '<strong>fetchLater API 为延后发送请求提供原生通道</strong> — 页面可以在更接近离开时机时可靠上报数据，而不是完全依赖 sendBeacon 与 unload 时机。埋点、草稿保存、广告归因和 WebView 关闭页上报都可能因此得到更稳定的数据完整性。', source: 'https://developer.chrome.com/release-notes/135' },
+        { impact: 'medium', text: '<strong>CSS 轮播伪元素补齐原生控件样式能力</strong> — 轮播相关控件可以通过伪元素直接定制，不必全部重造一套交互层。对图文横滑、内容推荐位和媒体画廊是效率提升，但也要注意不同输入设备下的可访问性。', source: 'https://developer.chrome.com/release-notes/135' },
+        { impact: 'medium', text: '<strong>Observable API 带来统一的数据流原语</strong> — 浏览器原生开始拥抱可订阅流，方便把异步数据、事件和取消逻辑组合起来。复杂前端架构短期未必立刻迁移，但对框架作者、实时协作和监控 SDK 是重要基础设施。', source: 'https://developer.chrome.com/release-notes/135' },
+        { impact: 'medium', text: '<strong>CSS shape() 让几何路径表达更灵活</strong> — 不规则裁切、命中区域和视觉轮廓可直接在 CSS 中声明。活动页、品牌 Banner、富视觉卡片可以减少对 SVG 遮罩和绝对定位补丁的依赖。', source: 'https://developer.chrome.com/release-notes/135' },
+        { impact: 'medium', text: '<strong>srcdoc 文档也能继承 Service Worker 语义</strong> — iframe srcdoc 与离线缓存、请求拦截、鉴权策略之间的关系更一致。微前端壳层、可视化编辑器和消息预览面板若使用 srcdoc 渲染，将需要关注缓存行为是否出现变化。', source: 'https://developer.chrome.com/release-notes/135' },
+        { impact: 'low', text: '<strong>setInterval 的旧限制被移除</strong> — 某些历史性的嵌套限制不再保留，计时器表现更贴近规范。普通页面收益不大，但高频调度逻辑、动画测试和模拟器类工具在升级后会得到更一致的时间行为。', source: 'https://developer.chrome.com/release-notes/135' },
+        { impact: 'medium', text: '<strong>CORS 重定向相关请求头处理更新</strong> — 跨域重定向链上的头部传播与校验更规范，能减少安全歧义。支付回跳、文件下载、鉴权代理和图床跳转如果之前踩着旧行为过关，升级后应重点回归。', source: 'https://developer.chrome.com/release-notes/135' }
+      ]},
+      { version: '134', date: '2025-03', summary: '重点：Bounce Tracking 防护扩展到 HTTP Cache，归因统计与跳转链路要复核', changes: [
+        { impact: 'medium', text: '<strong>select 元素开始支持更深度自定义</strong> — 原生下拉框终于可以在保持语义和可访问性的同时拥有更丰富的外观与结构。后台系统、移动表单和 WebView 内嵌业务页能减少“为了一个下拉框重造整套组件”的成本，但需验证旧 CSS 是否与新结构冲突。', source: 'https://developer.chrome.com/release-notes/134' },
+        { impact: 'low', text: '<strong>Select 的 HTML 解析器更宽松</strong> — 浏览器对部分历史上不够规范的 select 结构容忍度更高，旧页面在解析时不容易直接出怪异结果。这有助于兼容存量模板，但不代表可以继续放任无效标记。', source: 'https://developer.chrome.com/release-notes/134' },
+        { impact: 'low', text: '<strong>CSS Highlight 继承行为修复</strong> — 自定义高亮伪元素的样式传递更符合规范，减少不同浏览器之间的显示差异。搜索命中、批注、高亮阅读和 AI 摘要页面在升级后更容易得到一致外观。', source: 'https://developer.chrome.com/release-notes/134' },
+        { impact: 'medium', text: '<strong>Dialog 支持轻关闭交互</strong> — 用户点击外部区域即可按规范关闭对话框，不必每个弹窗都手写遮罩点击逻辑。产品体验会更接近原生，但支付、风控和必须强确认的弹窗要明确关闭策略，避免误关。', source: 'https://developer.chrome.com/release-notes/134' },
+        { impact: 'medium', text: '<strong>JavaScript 显式资源管理 using 进入平台</strong> — 某些带清理语义的对象可以在离开作用域时自动释放，减少手写 try/finally。对复杂编辑器、数据库连接、流式处理和 Wasm 资源封装代码来说，可维护性会更好。', source: 'https://developer.chrome.com/release-notes/134' },
+        { impact: 'low', text: '<strong>CSS dynamic-range-limit 增加 HDR 亮度控制</strong> — 页面可以更细地约束高动态范围内容的亮度上限，避免局部元素过亮抢眼。媒体类应用、相册和视频详情页在高端屏幕上的观感会更稳。', source: 'https://developer.chrome.com/release-notes/134' },
+        { impact: 'high', text: '<strong>Bounce Tracking Mitigation 扩展到 HTTP Cache</strong> — 浏览器不仅限制跳转式追踪，还进一步减少缓存被利用为追踪状态载体的空间。营销归因、短链分发和跨站跳转分析要关注统计口径变化，但从用户隐私角度看这是持续加强。', source: 'https://developer.chrome.com/release-notes/134' },
+        { impact: 'medium', text: '<strong>移除非标准 getUserMedia 音频约束</strong> — 某些 Chrome 私有或历史遗留的音频参数不再继续兼容。做采集降噪、通话优化、直播推流的代码如果仍传这些字段，应该尽快清理，以免出现“配置看似生效其实已被忽略”的错觉。', source: 'https://developer.chrome.com/release-notes/134' },
+        { impact: 'medium', text: '<strong>表单控件原生能力增强对 WebView 更有价值</strong> — 过去很多 App 内嵌页面不得不为了统一外观完全自绘表单控件，现在可以更多借助标准能力来实现。这样既减少脚本维护量，也更容易获得键盘、读屏和系统主题的原生适配。', source: 'https://developer.chrome.com/release-notes/134' }
+      ]},
+      { version: '133', date: '2025-02', summary: '重点：Storage Access Headers 与后台冻结增强，嵌入登录和保活策略都要重测', changes: [
+        { impact: 'medium', text: '<strong>DOM moveBefore() 支持保留状态移动节点</strong> — 元素在移动位置时可以保留更多内部状态，而不是像传统 remove/insert 那样更容易丢失焦点、动画或脚本关联。复杂拖拽排序、富表单重排和虚拟化列表在实现上会更稳。', source: 'https://developer.chrome.com/release-notes/133' },
+        { impact: 'medium', text: '<strong>CSS Scroll State 容器查询补齐滚动驱动响应式</strong> — 组件可以根据自己是否可滚动、是否到边界来切换样式，而不是全靠 JS 监听 scroll。吸顶目录、滚动阴影、卡片导航和阅读器提示都会更容易做成纯 CSS。', source: 'https://developer.chrome.com/release-notes/133' },
+        { impact: 'medium', text: '<strong>responseStart 语义回滚并新增 firstResponseHeadersStart</strong> — 性能指标中 TTFB 相关口径更贴近真实网络首包阶段，监控系统会看到部分数据定义变化。做性能平台、告警阈值和版本对比时，必须同步更新口径说明，避免把规范调整误判成网络劣化。', source: 'https://developer.chrome.com/release-notes/133' },
+        { impact: 'medium', text: '<strong>attr() 支持更多类型的高级用法</strong> — CSS 可直接读取属性值并转换为长度、数字等类型，减少很多属性到样式变量的脚本桥接。组件作者会更容易写出声明式样式 API。', source: 'https://developer.chrome.com/release-notes/133' },
+        { impact: 'low', text: '<strong>text-box 与 text-box-trim 改善文字框裁切</strong> — 不同字体上下留白终于有了更标准的控制方式。对按钮、标题、徽标字和高度敏感的设计稿还原尤其有帮助。', source: 'https://developer.chrome.com/release-notes/133' },
+        { impact: 'medium', text: '<strong>多 import maps 让大型应用模块治理更灵活</strong> — 一个页面可以组合多个映射源，便于微前端和插件式架构逐步接入模块映射。工程组织更灵活，但也意味着冲突检查与加载顺序需要更严格管理。', source: 'https://developer.chrome.com/release-notes/133' },
+        { impact: 'high', text: '<strong>Storage Access Headers 让服务端也能参与存储访问授权</strong> — 不再只有前端脚本请求，服务端响应头也可辅助表达跨站存储访问意图。做嵌入式登录、支付跳板页和第三方组件接入的团队，多了一条标准化的兼容通道。', source: 'https://developer.chrome.com/release-notes/133' },
+        { impact: 'medium', text: '<strong>WebAssembly Memory64 让 Wasm 能处理更大内存空间</strong> — 面向大模型推理、专业编辑器、地图离线数据和大型表格引擎的 Web 应用会更有施展空间。普通站点变化不大，但重计算应用会把它当作关键基础设施。', source: 'https://developer.chrome.com/release-notes/133' },
+        { impact: 'medium', text: '<strong>FileSystemObserver 为本地文件变更监听打基础</strong> — 页面可以更自然地感知已授权文件或目录的变化，而不必频繁轮询。在线 IDE、设计工具、日志查看器和 WebView 壳内文件管理场景会因此更接近桌面应用体验。', source: 'https://developer.chrome.com/release-notes/133' },
+        { impact: 'high', text: '<strong>Energy Saver 更积极冻结后台标签</strong> — 省电模式下后台页会更快进入冻结，定时刷新、心跳保活和长任务计算的可持续性进一步下降。对 App 内多 WebView、长驻后台页和监控面板，必须重新确认生命周期策略。', source: 'https://developer.chrome.com/release-notes/133' }
+      ]},
+      { version: '132', date: '2025-01', summary: '重点：Android/WebView 获得文件系统 API，旧 webkit 全屏接口必须下线', changes: [
+        { impact: 'high', text: '<strong>File System Access API 正式进入 Android 与 WebView</strong> — showOpenFilePicker、showSaveFilePicker 等文件访问能力不再局限于桌面浏览器，App 内嵌页面也能走标准 Web 文件选择与保存流程。文档编辑、表单附件、离线导入导出等场景会显著受益，但宿主侧仍需评估权限与用户教育。', source: 'https://developer.android.com/jetpack/androidx/releases/webkit' },
+        { impact: 'medium', text: '<strong>键盘可聚焦滚动容器正式落地</strong> — 可滚动区域可以自然参与 Tab 焦点链，键盘用户不必先点中容器才能滚动。后台管理、电视端、车机和外接键盘的 WebView 场景可访问性会明显改善，但一些自定义焦点逻辑可能需要重新排序。', source: 'https://developer.chrome.com/release-notes/132' },
+        { impact: 'medium', text: '<strong>在非活动文档上调用 Popover 或 Dialog 会抛异常</strong> — 浏览器不再默默忽略这类无效调用，而是明确提示开发者错误使用时机。涉及多窗口、预渲染、隐藏 iframe 或路由切换中的弹层代码，应避免在文档未激活时提前操作。', source: 'https://developer.chrome.com/release-notes/132' },
+        { impact: 'high', text: '<strong>移除 webkit 前缀全屏 API</strong> — webkitRequestFullscreen 等历史接口退出舞台，继续依赖它们的代码在新核下会直接报错或无效。视频页、相册、游戏和 WebView 容器桥接如仍写老接口，必须改为标准 Fullscreen API。', source: 'https://developer.chrome.com/release-notes/132' },
+        { impact: 'low', text: '<strong>Dialog 新增 ToggleEvent</strong> — 对话框开合时有了更统一的状态事件，组件和埋点可以少写一层自定义包装。中后台弹窗体系和设计系统会更容易统一行为。', source: 'https://developer.chrome.com/release-notes/132' },
+        { impact: 'medium', text: '<strong>localhost 默认忽略 HSTS</strong> — 本地开发环境不再容易因为历史 HSTS 记录被强制升级到 HTTPS 而导致调试混乱。对联调、内嵌 H5 调试和本机代理工具非常友好，但也意味着本地环境与正式环境的安全行为差异要心里有数。', source: 'https://developer.chrome.com/release-notes/132' },
+        { impact: 'medium', text: '<strong>FedCM Mode API 让登录流程模式更可控</strong> — 身份提供方与业务站点可以更明确表达交互模式，减少账号选择与授权流程中的黑盒行为。对于接入统一登录的平台，这有助于提升交互确定性。', source: 'https://developer.chrome.com/release-notes/132' },
+        { impact: 'low', text: '<strong>Request 与 Response 新增 bytes() 方法</strong> — 直接拿 Uint8Array 比先转 ArrayBuffer 再手动包装更顺手。文件校验、二进制协议、加密验签和 WebView JSBridge 传输都能少一层样板代码。', source: 'https://developer.chrome.com/release-notes/132' }
+      ]},
+      { version: '131', date: '2024-11', summary: '重点：Anchor Positioning 属性更名，已试点锚定定位的浮层样式需全量替换', changes: [
+        { impact: 'high', text: '<strong>CSS Anchor Positioning 中 inset-area 更名为 position-area</strong> — 这是明确的命名调整，旧属性名会让部分锚定定位样式失效。已经试点新布局的业务与组件库应尽快全量替换，避免升级后按钮气泡、菜单和引导气泡错位。', source: 'https://developer.chrome.com/release-notes/131' },
+        { impact: 'medium', text: '<strong>details/summary 原生样式能力增强</strong> — 可折叠区域的默认样式和可定制性更完善，做 FAQ、协议说明和设置分组不必总重写一套 ARIA 组件。既能保留语义，也能减少脚本维护量。', source: 'https://developer.chrome.com/release-notes/131' },
+        { impact: 'medium', text: '<strong>CSS @page 页边距盒子补齐打印排版能力</strong> — 页眉、页脚、页码等打印元素可以更标准地布局。合同、报表、票据和医疗文书等浏览器打印场景会因此更接近专业排版结果。', source: 'https://developer.chrome.com/release-notes/131' },
+        { impact: 'medium', text: '<strong>anchor-scope 让锚定定位作用域更清晰</strong> — 页面可以限定某些锚点只在指定范围内被引用，减少大型页面中同名锚点互相干扰。复杂弹层系统、表格内编辑器和微前端子应用都更容易控制定位来源。', source: 'https://developer.chrome.com/release-notes/131' },
+        { impact: 'low', text: '<strong>font-variant-emoji 支持精确控制 emoji 呈现风格</strong> — 同样的字符可以明确要求按彩色表情还是文本字形渲染。社交、客服、品牌文案和富文本编辑器能更好统一视觉风格。', source: 'https://developer.chrome.com/release-notes/131' },
+        { impact: 'medium', text: '<strong>允许引用外部 SVG 资源</strong> — 页面与组件可以更方便地复用外部 SVG 定义，而不是把大量符号内联进每个页面。图标系统、地图标记和矢量素材管理会因此更清爽，但也要注意跨源与缓存策略。', source: 'https://developer.chrome.com/release-notes/131' },
+        { impact: 'high', text: '<strong>FedCM 可作为 Storage Access 的信任信号</strong> — 用户一旦在 FedCM 授权过身份，后续某些存储访问申请可更顺畅地通过。对第三方登录、嵌入式身份组件和联合登录浮层而言，这有助于减少多次弹窗，改善登录转化。', source: 'https://developer.chrome.com/release-notes/131' },
+        { impact: 'medium', text: '<strong>新增 noopener-allow-popups COOP 值</strong> — 站点在隔离安全和弹窗互操作之间多了一个更细粒度选项。支付收银台、OAuth 登录、商家后台打开子窗口的场景可以更稳地兼顾安全与流程完整性。', source: 'https://developer.chrome.com/release-notes/131' }
+      ]},
+      { version: '130', date: '2024-10', summary: '重点：自定义协议 URL 解析更规范，App WebView 深链与桥接链接要回归', changes: [
+        { impact: 'medium', text: '<strong>键盘可聚焦滚动容器首次进入稳定版尝试</strong> — 用户可通过键盘更直接地聚焦和滚动内容区域，尤其利好桌面化后台与大屏设备。若你的组件此前人为插入了很多 tabindex 补丁，升级后要检查是否出现焦点重复。', source: 'https://developer.chrome.com/release-notes/130' },
+        { impact: 'medium', text: '<strong>压缩字典传输支持 Brotli 与 Zstandard</strong> — 浏览器与服务端可以围绕共享字典进一步减少重复字节传输，对大型脚本包、模板化接口和高重复文本内容非常有价值。它适合高流量平台做精细优化，但需要服务端链路一起配合。', source: 'https://developer.chrome.com/release-notes/130' },
+        { impact: 'medium', text: '<strong>CSS Nesting 的声明顺序修复</strong> — 嵌套规则与普通声明之间的优先级、展开时机更贴近规范。已有项目如果混写了嵌套和后置声明，升级后可能会看到少量样式覆盖关系变化，建议回归设计系统基础组件。', source: 'https://developer.chrome.com/release-notes/130' },
+        { impact: 'medium', text: '<strong>非特殊协议 URL 解析更规范</strong> — 对自定义 scheme、内部协议和非 http(s) 链接的解析更加统一。App WebView 常见的自定义协议、深链和桥接链接应重点验证，避免参数截断或 host/path 判断与旧版本不同。', source: 'https://developer.chrome.com/release-notes/130' },
+        { impact: 'low', text: '<strong>box-decoration-break 无前缀可用</strong> — 行内换行装饰的标准属性终于可以替代私有写法。做多行高亮标签、徽章、引用块和富文本卡片时，样式代码会更干净。', source: 'https://developer.chrome.com/release-notes/130' },
+        { impact: 'low', text: '<strong>并发 smooth scrollIntoView 问题修复</strong> — 多次平滑滚动同时发生时，浏览器的实际行为更稳定，不容易出现跳动和抢占。多导航联动、长表单错误定位和目录跳转体验会更可预测。', source: 'https://developer.chrome.com/release-notes/130' },
+        { impact: 'medium', text: '<strong>WebAssembly String Builtins 改善 Wasm 处理字符串能力</strong> — 某些原本要绕回 JS 做的字符串逻辑可以更高效地在 Wasm 边界完成。对编译型语言前端框架、编辑器和规则引擎性能有现实意义。', source: 'https://developer.chrome.com/release-notes/130' },
+        { impact: 'low', text: '<strong>IndexedDB 大对象报错信息改进</strong> — 当存储值过大或结构复杂时，开发者更容易定位失败原因。做离线缓存和大文件元数据持久化的团队，排障成本会下降。', source: 'https://developer.chrome.com/release-notes/130' },
+        { impact: 'medium', text: '<strong>Container Queries 在 flat tree 上的行为更一致</strong> — 组件跨 Shadow DOM 或扁平树边界时，容器查询结果更符合规范。做 Web Components、设计系统和微前端容器的团队，样式稳定性会提升。', source: 'https://developer.chrome.com/release-notes/130' }
+      ]},
+      { version: '129', date: '2024-09', summary: '重点：不安全上下文 PointerEvent 受限，HTTP 内网页与 0.0.0.0 访问将踩雷', changes: [
+        { impact: 'medium', text: '<strong>scheduler.yield() 提供标准化让出主线程能力</strong> — 长任务可以主动切片，减少脚本独占 UI 线程造成的卡顿。搜索建议、富表格、复杂计算和低代码运行时都可以用它改善交互流畅度。', source: 'https://developer.chrome.com/release-notes/129' },
+        { impact: 'medium', text: '<strong>CSS interpolate-size 与 calc-size() 让 auto 参与动画</strong> — 过去高度从 0 到 auto 很难优雅动画，现在终于有了标准路径。手风琴、折叠卡片、消息展开和菜单过渡不必再依赖测量高度的脚本 hack。', source: 'https://developer.chrome.com/release-notes/129' },
+        { impact: 'medium', text: '<strong>锚定定位属性继续重命名收口</strong> — Anchor Positioning 在快速演进阶段又有命名调整，试点业务若跟进不及时，气泡和浮层位置会直接错。组件库维护者应把相关属性封装集中处理，减少业务面大面积改动。', source: 'https://developer.chrome.com/release-notes/129' },
+        { impact: 'low', text: '<strong>backdrop-filter 边缘镜像处理更合理</strong> — 模糊和滤镜在元素边缘的视觉伪影更少，毛玻璃层更自然。活动页、导航浮层和卡片式 UI 的观感会更好。', source: 'https://developer.chrome.com/release-notes/129' },
+        { impact: 'medium', text: '<strong>WebRTC DataChannel 可直接发送 Blob</strong> — 二进制文件、图片和录音片段可以更方便地通过数据通道传输，不必都先手动读成 ArrayBuffer。即时通信、协同白板和点对点文件快传实现会更直接。', source: 'https://developer.chrome.com/release-notes/129' },
+        { impact: 'low', text: '<strong>Snap Events 提供吸附滚动状态事件</strong> — 轮播、卡片分页和全屏翻页可以更准确感知何时真正吸附到目标位置。交互埋点和指示器联动会更稳，不必自己猜测滚动是否结束。', source: 'https://developer.chrome.com/release-notes/129' },
+        { impact: 'low', text: '<strong>Intl.DurationFormat 进入平台</strong> — 时长国际化显示终于不用再自己拼接天、时、分、秒。音视频、计时器、报表和多语言运营页都能减少一类基础工具代码。', source: 'https://developer.chrome.com/release-notes/129' },
+        { impact: 'high', text: '<strong>非安全上下文下的 PointerEvent 能力被移除</strong> — 某些输入能力只在 HTTPS 或可信上下文可用，进一步减少中间人和不安全页面滥用输入数据的空间。老内网页面和未上 HTTPS 的 WebView 场景需要尽快补齐安全上下文。', source: 'https://developer.chrome.com/release-notes/129' },
+        { impact: 'medium', text: '<strong>移除非标准 Shadow DOM 序列化 API</strong> — 依赖私有接口导出或检查 Shadow DOM 结构的代码需要迁移到标准方案。可视化搭建器、组件调试工具和测试框架要重点检查。', source: 'https://developer.chrome.com/release-notes/129' },
+        { impact: 'high', text: '<strong>开始废弃通过 0.0.0.0 访问私网资源</strong> — 一些历史上把 0.0.0.0 当成本机或局域网捷径的写法将被限制。开发联调、设备探测和 App 壳层桥接若仍有此类地址，应改成明确的 localhost 或实际私网 IP。', source: 'https://developer.chrome.com/release-notes/129' }
+      ]},
+      { version: '128', date: '2024-08', summary: '重点：Partitioned Cookie 校验看完整祖先链，多层 iframe 登录态必须复测', changes: [
+        { impact: 'medium', text: '<strong>CSS zoom 迈向标准化</strong> — 过去常被当成私有能力的缩放属性，终于有了更明确的跨浏览器语义。内部运营工具、看板和面向桌面的大屏页面若一直依赖 zoom，会更容易走向可维护的标准实现。', source: 'https://developer.chrome.com/release-notes/128' },
+        { impact: 'high', text: '<strong>分区 Cookie 引入跨站祖先链标志</strong> — 浏览器在判断 Partitioned Cookie 能否使用时，会更关注完整的跨站祖先上下文。嵌入式支付、三方组件、广告容器和 App 内多层 WebView/iframe 组合页需要重新确认登录态与实验流量是否稳定。', source: 'https://developer.chrome.com/release-notes/128' },
+        { impact: 'medium', text: '<strong>caretPositionFromPoint() 支持穿透 Shadow DOM</strong> — 复杂组件内部的光标定位终于更容易拿到真实结果。富文本、公式编辑器、代码编辑器和输入法辅助工具都会因此减少一层 Shadow DOM 兼容代码。', source: 'https://developer.chrome.com/release-notes/128' },
+        { impact: 'low', text: '<strong>CSS ruby-align 改善注音与东亚排版能力</strong> — 对字词上方注音、并列说明和教育场景排版更友好。阅读器、字典、教育产品和国际化排版会受益。', source: 'https://developer.chrome.com/release-notes/128' },
+        { impact: 'low', text: '<strong>AudioContext onerror 补齐错误观测</strong> — Web Audio 在初始化或运行失败时，更容易把问题暴露给脚本。音频播放器、效果器和音游类应用的排障效率会更高。', source: 'https://developer.chrome.com/release-notes/128' },
+        { impact: 'medium', text: '<strong>Promise.try() 提供同步与异步统一入口</strong> — 一段可能抛同步异常也可能返回 Promise 的逻辑，现在可以用更标准的方式包进异步链。工具库、请求层和框架内部代码会写得更整齐。', source: 'https://developer.chrome.com/release-notes/128' },
+        { impact: 'low', text: '<strong>Media Session 新增 SkipAd 动作</strong> — 媒体页面可以更标准地响应系统级“跳过广告”意图。做长视频和音频内容的平台可以把广告控制与系统媒体控件打通。', source: 'https://developer.chrome.com/release-notes/128' },
+        { impact: 'medium', text: '<strong>PointerEvent deviceProperties 暴露更多设备细节</strong> — 对手写笔、触控板等输入设备的识别更细，有助于做高精度交互。绘图、签批、教育书写和专业设计类 WebApp 会更看重这项能力。', source: 'https://developer.chrome.com/release-notes/128' }
+      ]},
+      { version: '127', date: '2024-07', summary: '重点：Mutation Events 默认停用，私网访问还要求安全上下文需双重排查', changes: [
+        { impact: 'high', text: '<strong>Mutation Events 默认停用</strong> — 浏览器正式让 DOMNodeInserted 等历史事件退出默认运行路径，许多“祖传监听”会直接失声。老脚本、埋点、编辑器插件和第三方 SDK 若仍依赖它们，应立即迁移到 MutationObserver。', source: 'https://developer.chrome.com/release-notes/127' },
+        { impact: 'medium', text: '<strong>键盘可聚焦滚动容器启用</strong> — 可滚动面板终于更像一个真正可访问的交互对象，而不是只能依赖鼠标滚轮。对桌面后台、车机、TV 和 WebView 外接键盘场景体验提升明显。', source: 'https://developer.chrome.com/release-notes/127' },
+        { impact: 'high', text: '<strong>私网访问要求安全上下文</strong> — 访问家庭或企业局域网资源的页面需要在更安全的环境中运行，HTTP 页面会逐步被卡住。设备管理台、扫码配网页、打印机设置页和 App 内嵌运维工具都要把 HTTPS 提上日程。', source: 'https://developer.chrome.com/release-notes/127' },
+        { impact: 'low', text: '<strong>font-size-adjust 改善不同字体回退时的版面稳定性</strong> — 字体切换或回退时，文本视觉大小更容易维持一致。对国际化、多端字体不齐和慢网字体加载场景很有价值。', source: 'https://developer.chrome.com/release-notes/127' },
+        { impact: 'medium', text: '<strong>View Transition 开始支持 iframe</strong> — 复杂页面里即使有嵌入内容，也更有机会做连贯转场。微前端、嵌入式活动页和宿主壳内页面动画会更自然，但跨文档和权限边界仍需谨慎设计。', source: 'https://developer.chrome.com/release-notes/127' },
+        { impact: 'medium', text: '<strong>text-size-adjust 互操作性提高</strong> — 浏览器自动调字策略更接近规范，移动端字号放大不再那么依赖私有差异。长文阅读、表单和新闻资讯页应重新验证极端字号下的布局。', source: 'https://developer.chrome.com/release-notes/127' },
+        { impact: 'medium', text: '<strong>Import Map 支持 integrity</strong> — 模块映射表终于可以和资源完整性机制协同，降低供应链被篡改的风险。大型前端工程、CDN 模块分发和低代码运行时值得尽快关注。', source: 'https://developer.chrome.com/release-notes/127' },
+        { impact: 'low', text: '<strong>媒体章节信息标准化暴露</strong> — 音视频内容可以更方便声明章节，播放器能据此做目录和跳转。课程、播客和长视频平台的交互会更细腻。', source: 'https://developer.chrome.com/release-notes/127' },
+        { impact: 'medium', text: '<strong>移除旧的 CSS 自定义状态 :--foo 语法</strong> — 自定义状态选择器收敛到新的标准写法，继续保留旧语法会导致组件样式失效。Web Components 库和设计系统必须统一迁移到 :state() 方案。', source: 'https://developer.chrome.com/release-notes/127' }
+      ]},
+      { version: '126', date: '2024-06', summary: '重点：import assert 被正式移除，JSON 模块与动态加载代码必须改写为 with', changes: [
+        { impact: 'medium', text: '<strong>同源跨文档视图过渡默认可用</strong> — 多页面站点第一次不必硬改成单页应用，也能获得原生级页面转场。详情页返回列表、图集浏览和多步表单会更顺滑，但前后页面都要按规范显式声明。', source: 'https://developer.chrome.com/release-notes/126' },
+        { impact: 'high', text: '<strong>import assert 语法被正式移除并改用 with</strong> — import ... assert { type: "json" } 将直接抛出 SyntaxError，不再只是警告。构建链、动态加载器和自定义脚本注入若没完成迁移，会在新核立即报错。', source: 'https://developer.chrome.com/release-notes/126' },
+        { impact: 'medium', text: '<strong>CloseWatcher 重新启用</strong> — Esc、返回手势、系统关闭请求终于有了更统一的管理接口，之前因与 dialog 交互问题而暂时下线的能力重新回归。弹窗密集的移动 Web 和 WebView 容器可借此简化返回键处理。', source: 'https://developer.chrome.com/release-notes/126' },
+        { impact: 'medium', text: '<strong>MediaRecorder 支持 MP4 容器</strong> — 录音录像结果更容易直接接入现有后端与播放器生态，而不必先转 WebM。会议录制、视频留言、短视频草稿和客服取证类场景会更省事。', source: 'https://developer.chrome.com/release-notes/126' },
+        { impact: 'medium', text: '<strong>navigator.cookieEnabled 语义修复</strong> — 它重新表示浏览器是否处理 Cookie，而不是误导性地代表当前上下文能否访问非分区 Cookie。登录诊断、兼容探测和老旧鉴权脚本升级后会拿到更符合规范的答案。', source: 'https://developer.chrome.com/release-notes/126' },
+        { impact: 'low', text: '<strong>Opus 编码器新增 signal 与 application 参数</strong> — 页面可告诉编码器当前更偏语音、音乐还是低延迟场景。音视频通话、在线课堂和播客录制可以针对业务目标做更合适的取舍。', source: 'https://developer.chrome.com/release-notes/126' },
+        { impact: 'medium', text: '<strong>attributionsrc 请求开始遵守资源级 referrer-policy</strong> — 归因请求不再特殊对待，而是跟普通子资源一致地应用引用来源策略。广告与归因平台的统计口径可能出现变化，但隐私与策略一致性更好。', source: 'https://developer.chrome.com/release-notes/126' },
+        { impact: 'low', text: '<strong>Gamepad 触发器震动扩展进入平台</strong> — 兼容手柄的扳机键可以获得更细致的触觉反馈。游戏和交互演示站点受益较大，普通业务影响较小。', source: 'https://developer.chrome.com/release-notes/126' }
+      ]},
+      { version: '125', date: '2024-05', summary: '重点：CSS 锚定定位正式发布，浮层组件可原生改造但需防后续语法演进', changes: [
+        { impact: 'medium', text: '<strong>CSS 锚定定位正式发布</strong> — 菜单、气泡、提示卡和引导浮层终于可以围绕目标元素做更原生的定位，而不是大量手算坐标。组件库会明显受益，但也应尽快封装统一 API，避免后续语法演进影响业务面。', source: 'https://developer.chrome.com/release-notes/125' },
+        { impact: 'high', text: '<strong>Storage Access API 扩展到非 Cookie 存储</strong> — 浏览器开始考虑第三方上下文对更多存储能力的访问，而不只是传统 Cookie。嵌入式身份组件、支付页和三方工具集成会拥有更完整的状态恢复能力，但也必须接受更严格的权限治理。', source: 'https://developer.chrome.com/release-notes/125' },
+        { impact: 'high', text: '<strong>移除 webkit 前缀全屏 API 的过渡继续推进</strong> — 老接口不该再被当成兼容首选，继续依赖它们的页面会在后续版本面临更直接的故障。视频、相册、课件和游戏类 WebView 页应尽快切到标准接口。', source: 'https://developer.chrome.com/release-notes/125' },
+        { impact: 'low', text: '<strong>CSS 步进值函数达到更稳定基线</strong> — 一些离散动画和分段视觉状态可以更标准地表达。对刻度进度、帧动画和节拍式交互是小而实用的增强。', source: 'https://developer.chrome.com/release-notes/125' },
+        { impact: 'medium', text: '<strong>CSS 自定义状态统一到 :state() 新语法</strong> — Web Components 的内部状态暴露终于走向标准写法，老的实验语法应逐步清理。设计系统和组件库越早迁移，后续兼容成本越低。', source: 'https://developer.chrome.com/release-notes/125' },
+        { impact: 'medium', text: '<strong>Compute Pressure API 暴露设备压力信号</strong> — 页面可以感知 CPU 等资源紧张程度，从而主动降帧、降画质或延后计算。会议、游戏、图形编辑和大屏可视化特别值得接入，以改善发热和续航。', source: 'https://developer.chrome.com/release-notes/125' },
+        { impact: 'medium', text: '<strong>Declarative Shadow DOM 支持序列化</strong> — 服务器输出和客户端恢复 Shadow DOM 的链路更完整，有利于 SSR 与组件化结合。设计系统、内容平台和 Web Components 方案会因此更容易做首屏直出。', source: 'https://developer.chrome.com/release-notes/125' },
+        { impact: 'medium', text: '<strong>WebSocket 接受 HTTP URL 写法</strong> — 开发者可以从现有 http(s) 地址更自然推导到 ws/wss 连接，而不是手动拼协议。配置中心、环境切换和 WebView 宿主注入地址的逻辑会简单一些。', source: 'https://developer.chrome.com/release-notes/125' },
+        { impact: 'low', text: '<strong>mousemove 的 preventDefault 不再阻止文本选择</strong> — 浏览器更明确地区分鼠标移动处理与文本选择行为，减少一些奇怪的交互副作用。拖拽组件如果靠这个旧副作用“顺便禁选”，应改用更明确的方案。', source: 'https://developer.chrome.com/release-notes/125' }
+      ]},
+      { version: '124', date: '2024-04', summary: '重点：Mutation Events 发出最后预警，Web MIDI 改权限后设备访问流程要补授权', changes: [
+        { impact: 'high', text: '<strong>TLS 引入 X25519Kyber768 后量子密钥交换</strong> — Chrome 开始在 TLS 中试验更抗量子攻击的混合握手方案，为长期敏感数据保护提前铺路。对普通业务几乎无感，但安全和合规团队应知道网络设备、中间代理与抓包环境可能会出现兼容性观察点。', source: 'https://developer.chrome.com/release-notes/124' },
+        { impact: 'high', text: '<strong>setHTMLUnsafe() 与 parseHTMLUnsafe() 提供受控 HTML 解析入口</strong> — 这些 API 让声明式 Shadow DOM 等能力不必强依赖 parser 阶段，但名字已经明确提醒它们需要搭配可信内容来源使用。富文本、模板系统和可视化搭建如果要接入，必须把安全边界讲清楚。', source: 'https://developer.chrome.com/release-notes/124' },
+        { impact: 'high', text: '<strong>Web MIDI 全面改为权限控制</strong> — MIDI 设备访问不再是轻量能力，而是明确纳入权限体系。音乐创作、硬件控制、教育设备和浏览器乐器类应用需要准备权限申请说明与失败兜底。', source: 'https://developer.chrome.com/release-notes/124' },
+        { impact: 'high', text: '<strong>Mutation Events 发出正式废弃公告</strong> — 虽然还未完全移除，但浏览器已经明确给出迁移信号。任何还在依赖 DOMNodeInserted 这类事件的代码，都应该把这版当作最后预警窗口。', source: 'https://developer.chrome.com/release-notes/124' },
+        { impact: 'medium', text: '<strong>WebSocketStream 提供基于流的 WebSocket 接口</strong> — 数据收发终于可以与 Streams API 体系更自然衔接，背压控制也更清晰。实时日志、聊天、行情和 AI 流式输出场景可以关注它的长期价值。', source: 'https://developer.chrome.com/release-notes/124' },
+        { impact: 'medium', text: '<strong>pageswap 事件帮助页面感知导航切换</strong> — 页面在被替换或切出时有了更明确的生命周期信号。做状态保存、离开页埋点、过渡动画和页面缓存恢复会更顺手。', source: 'https://developer.chrome.com/release-notes/124' },
+        { impact: 'medium', text: '<strong>Priority 请求头进入平台生态</strong> — 浏览器可以更明确告诉服务端资源优先级，帮助网络层做更聪明的调度。首屏资源治理、图文混排和媒体预加载都可能从中获益，但前提是服务端/CDN 愿意真正利用它。', source: 'https://developer.chrome.com/release-notes/124' },
+        { impact: 'low', text: '<strong>Sec-CH-UA-Form-Factors 暴露设备形态提示</strong> — 服务端可以更标准地知道当前设备更像手机、平板还是其他形态。它适合做粗粒度体验分流，但不应被当成替代响应式设计的万能开关。', source: 'https://developer.chrome.com/release-notes/124' },
+        { impact: 'medium', text: '<strong>Document 渲染阻塞控制更明确</strong> — 页面可声明哪些资源会阻塞渲染，帮助浏览器和开发者更清楚地协调首屏顺序。对性能治理、首屏骨架屏和资源优先级控制是实用增强。', source: 'https://developer.chrome.com/release-notes/124' },
+        { impact: 'low', text: '<strong>SVG context-fill 与 context-stroke 提升图标复用能力</strong> — SVG 子元素可更方便继承上下文颜色，图标和插画主题适配会简单很多。设计系统、品牌换肤和深浅色主题都能受益。', source: 'https://developer.chrome.com/release-notes/124' },
+        { impact: 'low', text: '<strong>ReadableStream 支持异步迭代</strong> — 流式读取终于能直接用 for await...of，代码可读性大幅提升。下载、解压、SSE/AI 流输出和媒体处理场景会少掉一层样板封装。', source: 'https://developer.chrome.com/release-notes/124' }
+      ]}
+    ];
+
+    var activeFilter = 'all';
+    var activeTab = 'changelog';
+
+    function renderTabs() {
+      document.querySelectorAll('.kcl-tab').forEach(function(tab) {
+        var isActive = tab.dataset.tab === activeTab;
+        tab.classList.toggle('active', isActive);
+        tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
+      });
+
+      document.querySelectorAll('.kcl-panel').forEach(function(panel) {
+        panel.classList.toggle('active', panel.dataset.panel === activeTab);
+      });
+    }
+
+    document.querySelectorAll('.kcl-tab').forEach(function(tab) {
+      tab.addEventListener('click', function() {
+        activeTab = tab.dataset.tab;
+        renderTabs();
+      });
+    });
+
+    function countByImpact(level) {
+      return changelog.reduce(function(sum, v) {
+        return sum + v.changes.filter(function(c) { return c.impact === level; }).length;
+      }, 0);
+    }
+
+    function renderStats() {
+      var total = changelog.reduce(function(s, v) { return s + v.changes.length; }, 0);
+      document.getElementById('stats').innerHTML =
+        '<span><strong>' + changelog.length + '</strong> versions</span>' +
+        '<span><strong>' + total + '</strong> changes</span>' +
+        '<span><strong class="s-high">' + countByImpact('high') + '</strong> high</span>' +
+        '<span><strong class="s-medium">' + countByImpact('medium') + '</strong> medium</span>' +
+        '<span><strong class="s-low">' + countByImpact('low') + '</strong> low</span>';
+    }
+
+    function renderFilter() {
+      var levels = ['all', 'high', 'medium', 'low'];
+      document.getElementById('filter').innerHTML = levels.map(function(l) {
+        return '<button class="kcl-filter-btn' + (activeFilter === l ? ' active' : '') + '" data-level="' + l + '">' + (l === 'all' ? 'All' : l) + '</button>';
+      }).join('');
+
+      document.querySelectorAll('.kcl-filter-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          activeFilter = btn.dataset.level;
+          renderFilter();
+          renderChangelog();
+        });
+      });
+    }
+
+    function renderChangelog() {
+      var mount = document.getElementById('changelogMount');
+      var filtered = changelog.map(function(ver) {
+        if (activeFilter === 'all') return ver;
+        var fc = ver.changes.filter(function(c) { return c.impact === activeFilter; });
+        return fc.length ? { version: ver.version, date: ver.date, changes: fc } : null;
+      }).filter(Boolean);
+
+      mount.innerHTML = filtered.map(function(ver) {
+        var releaseUrl = 'https://developer.chrome.com/release-notes/' + ver.version;
+        var summaryHtml = ver.summary ? '<div class="kcl-version-summary">' + ver.summary + '</div>' : '';
+        return '<article class="kcl-version">' +
+          '<div class="kcl-version-head">' +
+            '<span class="kcl-version-num">M' + ver.version + '</span>' +
+            '<span class="kcl-version-date">' + ver.date + '</span>' +
+            '<a class="kcl-version-source" href="' + releaseUrl + '" target="_blank" rel="noreferrer">release notes</a>' +
+            '<span class="kcl-version-tag">' + ver.changes.length + ' changes</span>' +
+          '</div>' +
+          summaryHtml +
+          '<ul class="kcl-change-list">' +
+            ver.changes.map(function(c) {
+              return '<li class="kcl-change-item">' +
+                '<span class="kcl-change-impact ' + c.impact + '">' + c.impact + '</span>' +
+                '<span class="kcl-change-text">' + c.text + '</span>' +
+                '<a class="kcl-change-source" href="' + c.source + '" target="_blank" rel="noreferrer">source</a>' +
+              '</li>';
+            }).join('') +
+          '</ul>' +
+        '</article>';
+      }).join('');
+    }
+
+    renderStats();
+    renderFilter();
+    renderChangelog();
+    renderTabs();
+  </script>
+</body>
+</html>

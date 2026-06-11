@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#f4f1ea" />
+  <title>Kernel Test Suite | WebView 内核回归测试</title>
+  <link rel="stylesheet" href="../../../assets/css/pages.css" />
+  <style>
+    .kt-tabs {
+      display: flex;
+      gap: 2px;
+      margin-bottom: 24px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 4px;
+      overflow-x: auto;
+    }
+    .kt-tab {
+      flex: 1;
+      min-width: 90px;
+      padding: 10px 14px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      text-align: center;
+      color: var(--text-muted);
+      background: transparent;
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .kt-tab:hover { color: var(--text-secondary); background: var(--bg-card); }
+    .kt-tab.active {
+      color: var(--accent);
+      background: var(--bg-card);
+      box-shadow: 0 0 0 1px var(--accent-border);
+    }
+    .kt-panel { display: none; }
+    .kt-panel.active { display: block; }
+
+    .kt-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .kt-btn {
+      padding: 9px 18px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.2s;
+      border: 1px solid var(--accent-border);
+      background: var(--accent-dim);
+      color: var(--accent);
+    }
+    .kt-btn:hover { background: rgba(245,166,35,0.2); transform: translateY(-1px); }
+    .kt-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+    .kt-btn.secondary { border-color: var(--border-strong); background: var(--bg-card); color: var(--text-secondary); }
+    .kt-btn.secondary:hover { border-color: var(--accent-border); color: var(--accent); }
+    .kt-btn.run-tab { border-color: rgba(0,217,180,0.4); background: var(--teal-dim); color: var(--teal); }
+    .kt-btn.run-tab:hover { background: rgba(0,217,180,0.15); }
+
+    .kt-progress { width: 100%; height: 5px; background: var(--bg-input); border-radius: 3px; overflow: hidden; }
+    .kt-progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--teal), var(--accent)); transition: width 0.3s; }
+
+    .kt-summary {
+      display: flex; gap: 16px; margin-top: 10px; flex-wrap: wrap; align-items: center;
+      font-family: var(--font-mono); font-size: 12px; color: var(--text-secondary);
+    }
+    .kt-stat-num { font-family: var(--font-display); font-size: 20px; letter-spacing: 0.04em; margin-right: 4px; }
+    .kt-stat-num.g { color: var(--green); }
+    .kt-stat-num.r { color: var(--red); }
+    .kt-stat-num.t { color: var(--text); }
+
+    .kt-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      margin-bottom: 14px;
+    }
+    .kt-card-hd {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--border);
+    }
+    .kt-card-icon { font-size: 18px; }
+    .kt-card-title { font-family: var(--font-display); font-size: 14px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text); }
+
+    .kt-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 12px; background: var(--bg-surface); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); margin-bottom: 6px;
+    }
+    .kt-row-name { font-family: var(--font-mono); font-size: 12px; color: var(--text-secondary); }
+    .kt-row-val { font-family: var(--font-mono); font-size: 12px; font-weight: 700; }
+    .kt-row-val.pass { color: var(--green); }
+    .kt-row-val.fail { color: var(--red); }
+    .kt-row-val.metric { color: var(--teal); }
+    .kt-row-val.waiting { color: var(--text-muted); }
+    .kt-row-val.running { color: var(--accent); animation: pulse 1.2s infinite; }
+    .kt-row-val.unsupported { color: #888; font-style: italic; }
+    @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.4} }
+
+    .kt-info-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(180px,1fr)); gap: 8px;
+    }
+    .kt-info-item {
+      padding: 10px 12px; background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-sm);
+    }
+    .kt-info-label { font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; }
+    .kt-info-value { font-family: var(--font-mono); font-size: 12px; color: var(--teal); margin-top: 2px; word-break: break-all; }
+
+
+    .kt-canvas-box { width: 100%; height: 200px; background: #000; border-radius: var(--radius-sm); margin-top: 10px; position: relative; }
+    .kt-canvas-box canvas { width: 100%; height: 100%; border-radius: var(--radius-sm); }
+
+    .kt-cdp-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 6px; }
+    .kt-cdp-cmd { font-family: var(--font-mono); font-size: 10px; color: var(--teal); background: var(--teal-dim); padding: 2px 6px; border-radius: 3px; }
+
+    details.kt-details { background: var(--bg-input); border-radius: var(--radius-sm); margin-top: 14px; border: 1px solid var(--border-strong); }
+    details.kt-details summary {
+      cursor: pointer; font-family: var(--font-mono); font-size: 12px; font-weight: 600; color: var(--text-secondary);
+      padding: 12px 15px; list-style: none; display: flex; align-items: center; gap: 8px;
+    }
+    details.kt-details summary::-webkit-details-marker { display: none; }
+    details.kt-details summary::before { content: '▸'; font-size: 10px; color: var(--accent); transition: transform 0.2s; display: inline-block; }
+    details.kt-details[open] summary::before { transform: rotate(90deg); }
+    details.kt-details pre { font-family: var(--font-mono); font-size: 11px; line-height: 1.7; color: var(--text-secondary); background: var(--bg-input); border-top: 1px solid var(--border); padding: 14px 15px; white-space: pre-wrap; word-break: break-all; margin: 0; }
+
+    /* Report Overlay */
+    #reportOverlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(10, 12, 15, 0.85);
+      z-index: 9999;
+      display: none;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 40px 20px;
+      overflow-y: auto;
+      backdrop-filter: blur(4px);
+    }
+    #reportOverlay.active {
+      display: flex;
+    }
+    .kt-report-modal {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius);
+      width: 100%;
+      max-width: 700px;
+      position: relative;
+      margin: auto;
+    }
+    .kt-report-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      width: 28px;
+      height: 28px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-family: var(--font-mono);
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+    .kt-report-close:hover {
+      color: var(--text);
+      background: var(--bg-card);
+      border-color: var(--border-strong);
+    }
+    .kt-report-header {
+      padding: 24px;
+      border-bottom: 1px solid var(--border);
+    }
+    .kt-report-title {
+      font-family: var(--font-display);
+      font-size: 24px;
+      color: var(--text);
+      margin: 0 0 16px 0;
+      letter-spacing: 0.05em;
+    }
+    .kt-report-meta {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+    .kt-report-body {
+      padding: 24px;
+    }
+    .kt-report-summary-box {
+      border: 1px solid var(--accent-border);
+      background: var(--accent-dim);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      margin-bottom: 30px;
+      font-family: var(--font-mono);
+      font-size: 14px;
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .kt-report-summary-box span { color: var(--text-secondary); }
+    .kt-report-summary-box strong { color: var(--text); }
+    .kt-report-summary-box .val-pass { color: var(--green); }
+    .kt-report-summary-box .val-fail { color: var(--red); }
+    
+    .kt-report-section-title {
+      font-family: var(--font-display);
+      font-size: 14px;
+      color: var(--text);
+      margin: 24px 0 12px 0;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      border-bottom: 1px dashed var(--border);
+      padding-bottom: 6px;
+    }
+    .kt-report-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--font-mono);
+      font-size: 12px;
+    }
+    .kt-report-table td {
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .kt-report-table tr:last-child td { border-bottom: none; }
+    .kt-report-table .col-icon { width: 24px; text-align: center; }
+    .kt-report-table .col-name { color: var(--text-secondary); }
+    .kt-report-table .col-val { text-align: right; font-weight: 700; }
+    .kt-report-table .val-pass { color: var(--green); }
+    .kt-report-table .val-fail { color: var(--red); }
+    .kt-report-table .val-metric { color: var(--teal); }
+    .kt-report-table .val-na { color: var(--text-muted); font-style: italic; }
+
+    .kt-report-score-block {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      border: 1px solid;
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .kt-report-score-num {
+      font-family: var(--font-display);
+      font-size: 52px;
+      line-height: 1;
+      letter-spacing: 0.04em;
+      flex-shrink: 0;
+    }
+    .kt-report-score-info { flex: 1; min-width: 160px; }
+    .kt-report-score-label {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .kt-report-score-sub {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+    .kt-report-score-help {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-muted);
+      text-decoration: none;
+      border: 1px solid var(--border);
+      padding: 4px 8px;
+      border-radius: var(--radius-sm);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .kt-report-score-help:hover { color: var(--accent); border-color: var(--accent-border); }
+    .kt-report-weight {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: var(--text-muted);
+      background: var(--bg-input);
+      border-radius: 3px;
+      padding: 1px 4px;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+
+    .kt-report-compare-header {
+      display: flex; gap: 14px; align-items: center; flex-wrap: wrap;
+      padding: 12px 16px; margin-bottom: 16px;
+      background: var(--bg-surface); border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+    }
+    .kt-report-compare-item {
+      font-family: var(--font-mono); font-size: 12px; color: var(--text-secondary);
+    }
+    .kt-report-compare-item strong { font-family: var(--font-display); font-size: 22px; margin-right: 6px; }
+    .kt-report-compare-arrow { color: var(--text-muted); font-size: 14px; }
+    .score-up { color: var(--green); }
+    .score-down { color: var(--red); }
+    .score-same { color: var(--text-muted); }
+
+    .kt-report-table th.col-old, .kt-report-table th.col-new, .kt-report-table th.col-delta {
+      font-family: var(--font-mono); font-size: 10px; font-weight: 600;
+      color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;
+      text-align: center; padding-bottom: 6px;
+    }
+    .kt-report-table th.col-delta { text-align: right; }
+    .kt-report-table .col-old, .kt-report-table .col-new { text-align: center; font-family: var(--font-mono); font-size: 12px; }
+    .kt-report-table .col-old { color: var(--text-muted); }
+    .kt-report-table .col-new { font-weight: 700; }
+    .kt-report-table .col-delta { text-align: right; font-family: var(--font-mono); font-size: 11px; font-weight: 700; }
+    .delta-improve { color: var(--green); }
+    .delta-regress { color: var(--red); }
+    .delta-same { color: var(--text-muted); }
+
+    @media print {
+      body * { visibility: hidden; }
+      #reportOverlay {
+        visibility: visible;
+        position: absolute; left: 0; top: 0;
+        background: #fff;
+        padding: 0;
+        display: flex !important;
+      }
+      #reportOverlay * { visibility: visible; }
+      .kt-report-modal {
+        border: none; max-width: 100%;
+        background: #fff;
+      }
+      .kt-report-close { display: none; }
+      .kt-report-title, .kt-report-section-title { color: #000; }
+      .kt-report-meta, .col-name, .kt-report-summary-box span { color: #333; }
+      .kt-report-summary-box { background: #f9f9f9; border-color: #ddd; }
+      .kt-report-table .val-pass { color: #0a0; }
+      .kt-report-table .val-fail { color: #d00; }
+      .kt-report-table .val-metric { color: #08a; }
+      .kt-report-table td { border-bottom: 1px solid #eee; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-wrap">
+    <header class="page-header">
+      <a href="../../../index.html" class="page-back">返回首页</a>
+      <div class="page-eyebrow">Chromium · Kernel Test Suite</div>
+      <h1 class="page-title">WebView <em>内核测试</em></h1>
+      <p class="page-subtitle">升核回归 · 5 大模块 · 自动化 · CDP 友好</p>
+    </header>
+
+    <!-- Global Toolbar -->
+    <div class="kt-toolbar">
+      <button class="kt-btn" id="btnRunAll">Run All Tests</button>
+      <button class="kt-btn secondary" id="btnExport">导出 JSON</button>
+      <button class="kt-btn secondary" id="btnCopy">复制结果</button>
+      <button class="kt-btn secondary" id="btnImportBaseline">导入基准</button>
+      <button class="kt-btn secondary" id="btnClearBaseline" style="display:none;">清除基准</button>
+      <input type="file" id="baselineFileInput" accept=".json" style="display:none;" />
+      <button class="kt-btn secondary" id="btnReport" disabled>查看报告</button>
+      <a href="./kernel_test_help.html" target="_blank" class="kt-btn secondary">？帮助</a>
+      <span id="baselineStatus" style="font-family:var(--font-mono);font-size:10px;color:var(--teal);display:none;"></span>
+      <span id="globalStatus" style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted);margin-left:auto;">Ready</span>
+    </div>
+    <div class="kt-progress"><div class="kt-progress-fill" id="progressFill"></div></div>
+    <div class="kt-summary">
+      <span><span class="kt-stat-num t" id="sTotal">0</span>Total</span>
+      <span><span class="kt-stat-num g" id="sPass">0</span>Pass</span>
+      <span><span class="kt-stat-num r" id="sFail">0</span>Fail</span>
+    </div>
+
+    <!-- Tabs -->
+    <nav class="kt-tabs" style="margin-top:20px;">
+      <button class="kt-tab active" data-tab="basic">Basic</button>
+      <button class="kt-tab" data-tab="perf">Performance</button>
+      <button class="kt-tab" data-tab="storage">Storage</button>
+      <button class="kt-tab" data-tab="media">Media</button>
+      <button class="kt-tab" data-tab="stress">Stress</button>
+      <button class="kt-tab" data-tab="pageperf">Page Perf</button>
+    </nav>
+
+    <!-- ==================== BASIC TAB ==================== -->
+    <div class="kt-panel active" id="panel-basic">
+      <div class="kt-toolbar"><button class="kt-btn run-tab" data-run="basic">Run Basic</button></div>
+
+      <div class="kt-card">
+        <div class="kt-card-hd"><span class="kt-card-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span><span class="kt-card-title">Browser Info</span><button class="kt-btn secondary" id="btnViewUA" style="margin-left:auto;padding:5px 12px;font-size:10px;" title="查看完整 User-Agent">查看 UA</button></div>
+        <div class="kt-info-grid" id="browserInfo"></div>
+      </div>
+
+      <div class="kt-card">
+        <div class="kt-card-hd"><span class="kt-card-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></span><span class="kt-card-title">Web API 能力</span></div>
+        <div id="basicTests"></div>
+      </div>
+
+    </div>
+
+    <!-- ==================== PERFORMANCE TAB ==================== -->
+    <div class="kt-panel" id="panel-perf">
+      <div class="kt-toolbar"><button class="kt-btn run-tab" data-run="perf">Run Performance</button></div>
+
+      <div class="kt-card">
+        <div class="kt-card-hd"><span class="kt-card-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span><span class="kt-card-title">JS 性能基准</span></div>
+        <div id="perfJsTests"></div>
+      </div>
+
+      <div class="kt-card">
+        <div class="kt-card-hd"><span class="kt-card-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg></span><span class="kt-card-title">DOM 性能</span></div>
+        <div id="perfDomTests"></div>
+      </div>
+
+      <div class="kt-card">
+        <div class="kt-card-hd"><span class="kt-card-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg></span><span class="kt-card-title">渲染性能</span></div>
+        <div id="perfRenderTests"></div>
+        <div class="kt-canvas-box" id="canvasBox" style="display:none;"><canvas id="fpsCanvas"></canvas></div>
+      </div>
+    </div>
+
+    <!-- ==================== STORAGE TAB ==================== -->
+    <div class="kt-panel" id="panel-storage">
+      <div class="kt-toolbar"><button class="kt-btn run-tab" data-run="storage">Run Storage</button></div>
+
+      <div class="kt-card">
+        <div class="kt-card-hd"><span class="kt-card-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></span><span class="kt-card-title">Storage & Database</span></div>
+        <div id="storageTests"></div>
+      </div>
+    </div>
+
+    <!-- ==================== MEDIA TAB ==================== -->
+    <div class="kt-panel" id="panel-media">
+      <div class="kt-toolbar"><button class="kt-btn run-tab" data-run="media">Run Media</button></div>
+
+      <div class="kt-card">
+        <div class="kt-card-hd"><span class="kt-card-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg></span><span class="kt-card-title">Video / Audio Codec</span></div>
+        <div id="mediaCodecTests"></div>
+      </div>
+
+      <div class="kt-card">
+        <div class="kt-card-hd"><span class="kt-card-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="10.5" r="2.5"/><circle cx="8.5" cy="7.5" r="2.5"/><circle cx="6.5" cy="12.5" r="2.5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg></span><span class="kt-card-title">Graphics</span></div>
+        <div id="mediaGfxTests"></div>
+      </div>
+    </div>
+
+    <!-- ==================== STRESS TAB ==================== -->
+    <div class="kt-panel" id="panel-stress">
+      <div class="kt-toolbar"><button class="kt-btn run-tab" data-run="stress">Run Stress</button></div>
+
+      <div class="kt-card">
+        <div class="kt-card-hd"><span class="kt-card-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span><span class="kt-card-title">压力测试</span></div>
+        <div id="stressTests"></div>
+      </div>
+    </div>
+
+    <!-- ==================== PAGE PERF TAB ==================== -->
+    <div class="kt-panel" id="panel-pageperf">
+
+      <div class="kt-card">
+        <div class="kt-card-hd"><span class="kt-card-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span><span class="kt-card-title">页面性能采集</span></div>
+        <div style="padding: 4px 0;">
+          <div class="kt-row"><span class="kt-row-name">测试页面（示例）</span><span class="kt-row-val metric"><a href="https://so.com" target="_blank" style="color:inherit;text-decoration:none;border-bottom:1px dashed;">so.com</a></span></div>
+          <div class="kt-row"><span class="kt-row-name">采集工具</span><span class="kt-row-val metric">Lighthouse CLI + adb gfxinfo + Android Profiler</span></div>
+          <div class="kt-row"><span class="kt-row-name">对比方式</span><span class="kt-row-val metric">旧核 vs 新核，同设备同网络，各 3 轮取 P50</span></div>
+          <div class="kt-row"><span class="kt-row-name">退化阈值</span><span class="kt-row-val fail">> 10% 触发排查</span></div>
+        </div>
+      </div>
+
+      <div class="kt-card">
+        <div class="kt-card-hd"><span class="kt-card-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span><span class="kt-card-title">so.com 测试矩阵</span></div>
+        <div style="padding: 4px 0;">
+          <div class="kt-row"><span class="kt-row-name">https://so.com</span><span class="kt-row-val metric">首页冷启动 — FCP / LCP 重点</span></div>
+          <div class="kt-row"><span class="kt-row-name">https://so.com/s?q=test</span><span class="kt-row-val metric">搜索结果页 — TTI / TBT 重点（JS 密集）</span></div>
+          <div class="kt-row"><span class="kt-row-name">https://m.so.com</span><span class="kt-row-val metric">移动端首页 — CLS / INP 重点</span></div>
+        </div>
+        <div style="margin-top:12px;padding:10px 12px;background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-sm);font-family:var(--font-mono);font-size:11px;color:var(--text-secondary);line-height:1.7;">
+          <strong style="color:var(--text);">预期指标：</strong>so.com 为轻量搜索页，FCP &lt; 1.5s / LCP &lt; 2.5s / CLS &lt; 0.05<br>
+          若升核后明显劣化说明网络栈或渲染管线有回归
+        </div>
+      </div>
+
+      <div class="kt-card">
+        <div class="kt-card-hd"><span class="kt-card-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg></span><span class="kt-card-title">Lighthouse 自动化执行（以 so.com 为例）</span></div>
+        <details class="kt-details" open>
+          <summary>Step 1 — 环境准备</summary>
+          <pre>npm install -g lighthouse
+# 确保 Node.js >= 18，Chrome/Chromium 已安装</pre>
+        </details>
+        <details class="kt-details">
+          <summary>Step 2 — 旧核基线采集</summary>
+          <pre>lighthouse https://so.com --output json --output-path ./lh_so_old.json \
+  --chrome-flags="--headless --no-sandbox"
+# 使用旧核浏览器跑 3 轮取中位数；飞行模式 + 屏幕常亮</pre>
+        </details>
+        <details class="kt-details">
+          <summary>Step 3 — 新核对比采集</summary>
+          <pre>lighthouse https://so.com --output json --output-path ./lh_so_new.json \
+  --chrome-flags="--headless --no-sandbox"
+# 切换到新核浏览器/WebView，相同设备相同网络环境再跑 3 轮取中位数</pre>
+        </details>
+        <details class="kt-details">
+          <summary>Step 4 — Android WebView 远程调试</summary>
+          <pre>adb forward tcp:9222 localabstract:webview_devtools_remote_{pid}
+lighthouse https://so.com --port=9222 --output json \
+  --output-path ./lh_so_webview.json
+# WebView 需设置 WebView.setWebContentsDebuggingEnabled(true)
+# 注意：复杂导航场景建议改用 Puppeteer 直接驱动 CDP</pre>
+        </details>
+        <details class="kt-details">
+          <summary>Step 5 — 批量采集脚本</summary>
+          <pre># urls.txt 示例：
+# https://so.com
+# https://so.com/s?q=test
+# https://m.so.com
+
+for url in $(cat urls.txt); do
+  lighthouse "$url" --output json \
+    --output-path "./results/$(echo $url | md5sum | cut -c1-8).json" \
+    --chrome-flags="--headless"
+done</pre>
+        </details>
+        <details class="kt-details">
+          <summary>Step 6 — 新旧对比</summary>
+          <pre>node -e "
+const o=require('./lh_so_old.json'), n=require('./lh_so_new.json');
+['FCP','LCP','CLS','TBT','SI'].forEach(m => {
+  const k = {
+    FCP:'first-contentful-paint',
+    LCP:'largest-contentful-paint',
+    CLS:'cumulative-layout-shift',
+    TBT:'total-blocking-time',
+    SI:'speed-index'
+  }[m];
+  const ov = o.audits[k].numericValue;
+  const nv = n.audits[k].numericValue;
+  const d = ((nv-ov)/ov*100).toFixed(1);
+  console.log(m + ': ' + ov.toFixed(0) + 'ms → ' + nv.toFixed(0) + 'ms (' + d + '%)');
+});
+"
+# > 10% 退化需排查</pre>
+        </details>
+      </div>
+
+      <div class="kt-card">
+        <div class="kt-card-hd"><span class="kt-card-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span><span class="kt-card-title">帧率与资源监控</span></div>
+        <details class="kt-details" open>
+          <summary>adb gfxinfo — 帧率 & Jank 率</summary>
+          <pre># 重置计数
+adb shell dumpsys gfxinfo &lt;package&gt; reset
+
+# 操作页面后采集
+adb shell dumpsys gfxinfo &lt;package&gt;
+
+# 关注指标：
+# Total frames rendered / Janky frames / 90th percentile / 95th percentile
+# Jank 率 = Janky frames / Total frames × 100%</pre>
+        </details>
+        <details class="kt-details">
+          <summary>Android Profiler — CPU / Memory / 网络</summary>
+          <pre># Android Studio → Profiler → 选择进程
+# 或命令行：
+adb shell dumpsys meminfo &lt;package&gt;   # 内存快照
+adb shell top -n 1 | grep &lt;package&gt;   # CPU 占用
+
+# 关注指标：
+# - CPU：页面加载期间 CPU 峰值占比
+# - Memory：PSS 峰值，30min 后是否回落（排除泄漏）
+# - Network：请求数、传输大小、TTFB</pre>
+        </details>
+      </div>
+
+    </div>
+
+    <!-- ==================== CDP Section (always visible) ==================== -->
+    <div class="kt-card" style="margin-top:24px;">
+      <div class="kt-card-hd"><span class="kt-card-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg></span><span class="kt-card-title">CDP 自动化接口</span></div>
+      <div class="kt-cdp-row"><span class="kt-row-name">读取测试结果</span><span class="kt-cdp-cmd">Runtime.evaluate → window.__KERNEL_TEST_RESULT__</span></div>
+      <div class="kt-cdp-row"><span class="kt-row-name">性能指标</span><span class="kt-cdp-cmd">Performance.getMetrics</span></div>
+      <div class="kt-cdp-row"><span class="kt-row-name">页面时序</span><span class="kt-cdp-cmd">Performance.enable → Page.loadEventFired</span></div>
+      <div class="kt-cdp-row"><span class="kt-row-name">内存快照</span><span class="kt-cdp-cmd">HeapProfiler.takeHeapSnapshot</span></div>
+      <div class="kt-cdp-row"><span class="kt-row-name">网络拦截</span><span class="kt-cdp-cmd">Network.enable → requestWillBeSent</span></div>
+      <div class="kt-cdp-row"><span class="kt-row-name">截图</span><span class="kt-cdp-cmd">Page.captureScreenshot</span></div>
+      <details class="kt-details">
+        <summary>Python 自动化脚本示例</summary>
+        <pre>import asyncio, json
+from pyppeteer import launch
+
+async def run_kernel_test():
+    browser = await launch(headless=True)
+    page = await browser.newPage()
+    cdp = await page.target.createCDPSession()
+    await cdp.send('Performance.enable')
+
+    await page.goto('http://localhost/kernel_test.html')
+    # 点击 Run All
+    await page.click('#btnRunAll')
+    # 等待完成
+    await page.waitForFunction(
+        '() => window.__KERNEL_TEST_RESULT__ != null',
+        timeout=120000
+    )
+    result = await page.evaluate('() => window.__KERNEL_TEST_RESULT__')
+    metrics = await cdp.send('Performance.getMetrics')
+
+    print(json.dumps(result, indent=2, ensure_ascii=False))
+    await browser.close()
+
+asyncio.run(run_kernel_test())</pre>
+      </details>
+    </div>
+  </div>
+
+  <div id="reportOverlay">
+    <div class="kt-report-modal">
+      <button class="kt-report-close" id="btnCloseReport">✕</button>
+      <div id="reportContent"></div>
+    </div>
+  </div>
+
+  <button class="qr-btn"></button>
+  <script src="../../../assets/js/vendor/qrcode.js"></script>
+
+  <script src="../../../assets/js/kernel-test/config.js"></script>
+  <script src="../../../assets/js/kernel-test/state.js"></script>
+  <script src="../../../assets/js/kernel-test/tests.js"></script>
+  <script src="../../../assets/js/kernel-test/runners.js"></script>
+  <script src="../../../assets/js/kernel-test/scoring.js"></script>
+  <script src="../../../assets/js/kernel-test/baseline.js"></script>
+  <script src="../../../assets/js/kernel-test/report.js"></script>
+  <script src="../../../assets/js/kernel-test/main.js"></script>
+</body>
+</html>
