@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#f4f1ea" />
   <title>升核测试方案 | WebView Benchmark Plan</title>
-  <link rel="stylesheet" href="../../../assets/css/pages.css" />
+  <link rel="stylesheet" href="../assets/css/pages.css" />
   <style>
     .page-wrap { max-width: 880px; }
 
@@ -285,7 +285,7 @@
 <body>
   <div class="page-wrap">
     <header class="page-header">
-      <a href="../../../index.html" class="page-back">返回首页</a>
+      <a href="../index.html" class="page-back">返回首页</a>
       <div class="page-eyebrow">Chromium · Test Plan</div>
       <h1 class="page-title">WebView <em>升核测试</em></h1>
       <p class="page-subtitle">基准测试 · 测试方案 · 升核资源</p>
@@ -301,7 +301,7 @@
       <h2 class="strategy-title">推荐<em>策略</em></h2>
       <ul class="strategy-list">
         <li><strong>必测基准</strong> — <a href="https://browserbench.org/Speedometer3.0/" target="_blank">Speedometer 3.0</a>、<a href="https://browserbench.org/MotionMark/" target="_blank">MotionMark</a>、<a href="https://webglsamples.org/aquarium/aquarium.html" target="_blank">WebGL Aquarium</a></li>
-          <li><strong>业务页面性能</strong> — Lighthouse CLI 本地采集 Core Web Vitals（<a href="../kernel/kernel_test.html" target="_blank" style="color:var(--accent);text-decoration:none;border-bottom:1px solid var(--accent);">详见 Page Perf 执行指南</a>）</li>
+          <li><strong>业务页面性能</strong> — Lighthouse CLI 本地采集 Core Web Vitals（<a href="kernel_test.html" target="_blank" style="color:var(--accent);text-decoration:none;border-bottom:1px solid var(--accent);">详见 Page Perf 执行指南</a>）</li>
         <li><strong>兼容性与新 API</strong> — <a href="https://browserscore.dev/" target="_blank">Browser Score</a>、<a href="https://caniuse.com/" target="_blank">Can I Use</a></li>
         <li><strong>媒体与网络</strong> — <a href="https://webrtc.github.io/samples/" target="_blank">WebRTC samples</a>、<a href="https://w3c.github.io/webcodecs/samples/" target="_blank">WebCodecs demo</a></li>
       </ul>
@@ -452,7 +452,7 @@
         <div class="phase-group">
           <div class="phase-group-label">测试项</div>
           <ul class="phase-items">
-            <li><strong><a href="../kernel/kernel_test.html" target="_blank" style="color:var(--accent)">Kernel Test Suite</a></strong> — 内置 API 兼容性 + 性能回归测试，支持 CDP 自动化采集 <span class="tag tag-must">必测</span>
+            <li><strong><a href="kernel_test.html" target="_blank" style="color:var(--accent)">Kernel Test Suite</a></strong> — 内置 API 兼容性 + 性能回归测试，支持 CDP 自动化采集 <span class="tag tag-must">必测</span>
               <div class="bm-detail">
                 <div class="bm-detail-grid">
                   <span class="detail-label">采集方式</span><span class="detail-value">CDP（Chrome DevTools Protocol）自动化驱动，支持无头模式批量执行</span>
@@ -541,7 +541,7 @@
             <li><strong>Lighthouse CLI</strong> 采集 Core Web Vitals（内部 H5 无法用 PageSpeed Insights） <span class="tag tag-must">必测</span></li>
             <li><code>adb shell dumpsys gfxinfo</code> 采集帧率和 Jank 率</li>
             <li><code>Android Profiler</code> 监控 CPU / Memory / 网络耗时</li>
-            <li><strong><a href="../kernel/kernel_test.html" target="_blank" style="color:var(--accent)">Kernel Test Suite &rarr; Page Perf</a></strong> — 完整执行指南（以 so.com 为例：Lighthouse 6 步自动化 + gfxinfo + Profiler） <span class="tag tag-rec">详见</span></li>
+            <li><strong><a href="kernel_test.html" target="_blank" style="color:var(--accent)">Kernel Test Suite &rarr; Page Perf</a></strong> — 完整执行指南（以 so.com 为例：Lighthouse 6 步自动化 + gfxinfo + Profiler） <span class="tag tag-rec">详见</span></li>
           </ul>
         </div>
         <div class="phase-group">

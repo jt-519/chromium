@@ -6,12 +6,12 @@
 
 | 阶段 | 页面 | 说明 |
 |------|------|------|
-| 0. 差异分析 | [kernel_upgrade_diff.html](kernel/kernel_upgrade_diff.html) | 看清 M124→M141 变了什么、风险多大 |
-| 0.5 变更明细 | [kernel_changelog.html](kernel/kernel_changelog.html) | 逐版本变更记录，按 high/medium/low 筛选 |
-| 1. 基准跑分 | [webview_benchmarks.html](benchmarks/webview_benchmarks.html) | Speedometer / JetStream / MotionMark / WebGL Aquarium |
-| 2. 测试方案 | [webview_test_plan.html](benchmarks/webview_test_plan.html) | P1-P4 完整准出流程 + 量化标准 |
-| 3. 自动化测试 | [kernel_test.html](kernel/kernel_test.html) | Kernel Test Suite — API 兼容 + 性能回归 + CDP 采集 |
-| 4. 功能测试 | [tests/](tests/) | CSS 特性、扩展管理、导航等手动验证页 |
+| 0. 差异分析 | [kernel_upgrade_diff.html](kernel_upgrade_diff.html) | 看清 M124→M141 变了什么、风险多大 |
+| 0.5 变更明细 | [kernel_changelog.html](kernel_changelog.html) | 逐版本变更记录，按 high/medium/low 筛选 |
+| 1. 基准跑分 | [webview_benchmarks.html](webview_benchmarks.html) | Speedometer / JetStream / MotionMark / WebGL Aquarium |
+| 2. 测试方案 | [webview_test_plan.html](webview_test_plan.html) | P1-P4 完整准出流程 + 量化标准 |
+| 3. 自动化测试 | [kernel_test.html](kernel_test.html) | Kernel Test Suite — API 兼容 + 性能回归 + CDP 采集 |
+| 4. 功能测试 | [tests/]( | CSS 特性、扩展管理、导航等手动验证页 |
 
 ---
 
