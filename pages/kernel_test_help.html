@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#f4f1ea" />
+  <meta name="theme-color" content="#F6F7F9" />
   <title>使用说明 | Kernel Test Suite</title>
   <meta name="description" content="Kernel Test Suite 使用说明与测试项解读，帮助工程师理解 WebView 升核测试流程、评分标准与 CDP 采集方法。">
   <link rel="canonical" href="https://jt-519.github.io/chromium/pages/kernel_test_help.html">
@@ -160,7 +160,7 @@
     }
     .grade-dot.green { color: var(--green); }
     .grade-dot.yellow { color: var(--accent); }
-    .grade-dot.orange { color: #fb923c; }
+    .grade-dot.orange { color: var(--orange); }
     .grade-dot.red { color: var(--red); }
 
     /* ── Formula box ── */
@@ -778,5 +778,11 @@ asyncio.run(run_kernel_test())</div>
       if (btn) btn.click();
     }
   </script>
+  <footer class="site-foot">
+    <div class="site-foot-inner">
+      <span>Chromium Upgrade Toolkit · 10 tools</span>
+      <a href="https://github.com/jt-519/chromium" target="_blank" rel="noopener">github.com/jt-519/chromium ↗</a>
+    </div>
+  </footer>
 </body>
 </html>

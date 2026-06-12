@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#f4f1ea" />
+  <meta name="theme-color" content="#0E1217" />
   <meta name="description" content="Chromium WebView 升核测试工具集，提供内核差异分析、性能基准测试、API 兼容性回归与功能验证全流程工具，覆盖 M124 至 M141。">
   <meta name="keywords" content="Chromium, WebView, 升核, 内核升级, Kernel Test, Speedometer, JetStream, MotionMark, Android, M124, M141, 兼容性测试, Breaking Changes">
   <meta property="og:title" content="Chromium 升核测试工具集">
@@ -11,199 +11,527 @@
   <meta property="og:url" content="https://jt-519.github.io/chromium/">
   <meta property="og:type" content="website">
   <link rel="canonical" href="https://jt-519.github.io/chromium/">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='%234285F4'%3E%3Cpath%20d='M12%200C8.21%200%204.831%201.757%202.632%204.501l3.953%206.848A5.454%205.454%200%200%201%2012%206.545h10.691A12%2012%200%200%200%2012%200zM1.931%205.47A11.943%2011.943%200%200%200%200%2012c0%206.012%204.42%2010.991%2010.189%2011.864l3.953-6.847a5.45%205.45%200%200%201-6.865-2.29zm13.342%202.166a5.446%205.446%200%200%201%201.45%207.09l.002.001h-.002l-5.344%209.257c.206.01.413.016.621.016%206.627%200%2012-5.373%2012-12%200-1.54-.29-3.011-.818-4.364zM12%2016.364a4.364%204.364%200%201%201%200-8.728%204.364%204.364%200%200%201%200%208.728Z'/%3E%3C/svg%3E">
   <title>Chromium — 升核测试工具集</title>
-  <link rel="stylesheet" href="assets/css/pages.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo+Expanded:wght@600;700;800&family=Hanken+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
-    .phase-flow {
-      display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
-      margin-bottom: 40px; padding-bottom: 32px; border-bottom: 1px solid var(--border);
-    }
-    .phase-item {
-      display: inline-flex; align-items: center; gap: 5px;
-      padding: 6px 14px;
-      background: var(--bg-card); border: 1px solid var(--border-strong);
-      border-radius: var(--radius);
-      font-family: var(--font-body); font-size: 13px; color: var(--text-secondary);
-      white-space: nowrap;
-    }
-    .phase-item b { font-family: var(--font-mono); font-size: 10px; color: var(--accent); font-weight: 600; }
-    .phase-arrow { color: var(--text-muted); font-size: 14px; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    .nav-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
-      gap: 8px;
-    }
-    .nav-card {
-      display: block; text-decoration: none;
-      background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg);
-      padding: 20px 20px 20px 22px;
-      position: relative; overflow: hidden;
-      transition: border-color var(--transition), box-shadow var(--transition), transform 0.25s cubic-bezier(0.16,1,0.3,1);
-      box-shadow: var(--shadow-sm);
-    }
-    .nav-card::before {
-      content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
-    }
-    .nav-card.c-accent::before { background: var(--accent); }
-    .nav-card.c-teal::before   { background: var(--teal); }
-    .nav-card.c-green::before  { background: var(--green); }
-    .nav-card:hover { border-color: var(--border-strong); box-shadow: var(--shadow-md); transform: translateY(-2px); }
-    .nav-card:hover .nav-card-arrow { opacity: 1; transform: translateX(0); color: var(--accent); }
+    :root {
+      --paper:     #F6F7F9;
+      --surface:   #FFFFFF;
+      --ink:       #0E1217;
+      --ink-2:     #171E27;
+      --text:      #10151B;
+      --text-soft: #586172;
+      --text-mut:  #8A93A1;
+      --line:      #E6E9EE;
+      --line-2:    #D7DCE3;
+      --accent:    #1452F0;
+      --accent-d:  #0B3BC0;
+      --teal:      #0E7C73;
+      --green:     #1E7A4D;
 
-    .nav-card-tag {
-      font-family: var(--font-mono); font-size: 10px; font-weight: 600;
-      text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px;
-    }
-    .nav-card.c-accent .nav-card-tag { color: var(--accent); }
-    .nav-card.c-teal .nav-card-tag   { color: var(--teal); }
-    .nav-card.c-green .nav-card-tag  { color: var(--green); }
+      --on-dark:        #EEF1F6;
+      --on-dark-soft:   rgba(238,241,246,0.58);
+      --on-dark-mut:    rgba(238,241,246,0.34);
+      --on-dark-line:   rgba(238,241,246,0.12);
+      --accent-on-dark: #6E97FF;
 
-    .nav-card-title {
-      font-family: var(--font-display); font-size: 17px; font-weight: 600;
-      color: var(--text); margin-bottom: 7px; line-height: 1.3; letter-spacing: -0.015em;
-    }
-    .nav-card-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
-    .nav-card-arrow {
-      position: absolute; top: 18px; right: 16px; font-size: 16px;
-      color: var(--text-muted); opacity: 0; transform: translateX(-3px);
-      transition: opacity var(--transition), transform var(--transition), color var(--transition);
+      --display: 'Archivo Expanded', 'Noto Sans SC', sans-serif;
+      --body:    'Hanken Grotesk', 'Noto Sans SC', sans-serif;
+      --mono:    'IBM Plex Mono', monospace;
+
+      --maxw: 1080px;
+      --ease: cubic-bezier(0.22, 1, 0.36, 1);
     }
 
-    .hero-badges { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+    html { scroll-behavior: smooth; }
 
+    body {
+      background: var(--paper);
+      color: var(--text);
+      font-family: var(--body);
+      font-size: 15px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+      min-height: 100vh;
+    }
+
+    .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 40px; }
+
+    a:focus-visible, .tool-card:focus-visible {
+      outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px;
+    }
+
+    /* ─────────────── HERO BAND ─────────────── */
+    .hero {
+      background: linear-gradient(168deg, var(--ink) 0%, var(--ink-2) 100%);
+      color: var(--on-dark);
+      position: relative;
+      overflow: hidden;
+      border-bottom: 1px solid var(--line-2);
+    }
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(var(--on-dark-line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--on-dark-line) 1px, transparent 1px);
+      background-size: 56px 56px;
+      mask-image: radial-gradient(ellipse 80% 70% at 70% 30%, #000 0%, transparent 75%);
+      -webkit-mask-image: radial-gradient(ellipse 80% 70% at 70% 30%, #000 0%, transparent 75%);
+      opacity: 0.5;
+      pointer-events: none;
+    }
+    .hero-inner { position: relative; padding: 30px 40px 72px; max-width: var(--maxw); margin: 0 auto; }
+
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding-bottom: 64px;
+    }
+    .brandmark {
+      display: inline-flex; align-items: center; gap: 10px;
+      font-family: var(--mono); font-size: 11px; font-weight: 500;
+      letter-spacing: 0.16em; text-transform: uppercase; color: var(--on-dark-soft);
+    }
+    .brandmark .chromium-mark {
+      width: 19px; height: 19px; flex-shrink: 0; color: var(--accent-on-dark);
+    }
     .gh-link {
-      position: fixed; top: 18px; right: 24px; z-index: 100;
-      display: inline-flex; align-items: center; gap: 6px;
-      font-family: var(--font-mono); font-size: 11px; font-weight: 600;
-      color: var(--text-muted); text-decoration: none;
-      padding: 6px 12px;
-      background: var(--bg-card); border: 1px solid var(--border-strong);
-      border-radius: var(--radius);
-      transition: color var(--transition), border-color var(--transition);
-      letter-spacing: 0.03em;
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: var(--mono); font-size: 11px; font-weight: 500; letter-spacing: 0.02em;
+      color: var(--on-dark-soft); text-decoration: none;
+      padding: 7px 13px; border: 1px solid var(--on-dark-line); border-radius: 8px;
+      transition: color 0.2s, border-color 0.2s, background 0.2s;
     }
-    .gh-link:hover { color: var(--accent); border-color: var(--accent-border); }
+    .gh-link:hover { color: var(--on-dark); border-color: rgba(238,241,246,0.3); background: rgba(238,241,246,0.04); }
     .gh-link svg { flex-shrink: 0; }
 
-    @media (max-width: 640px) {
-      .gh-link { display: none; }
-      .nav-grid { grid-template-columns: 1fr; }
-      .phase-item { font-size: 12px; padding: 5px 10px; }
+    .eyebrow {
+      font-family: var(--mono); font-size: 11px; font-weight: 500;
+      letter-spacing: 0.22em; text-transform: uppercase; color: var(--accent-on-dark);
+      margin-bottom: 22px;
+    }
+    .hero-title {
+      font-family: var(--display);
+      font-weight: 800;
+      font-size: clamp(46px, 7.2vw, 92px);
+      line-height: 0.98;
+      letter-spacing: -0.02em;
+      color: var(--on-dark);
+      margin-bottom: 26px;
+    }
+    .hero-lede {
+      font-size: 16px; line-height: 1.75; color: var(--on-dark-soft);
+      max-width: 480px; font-weight: 400;
+    }
+
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 34px; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 9px;
+      font-family: var(--body); font-size: 13.5px; font-weight: 600;
+      padding: 12px 20px; border-radius: 10px; text-decoration: none;
+      transition: transform 0.2s var(--ease), background 0.2s, border-color 0.2s, color 0.2s;
+    }
+    .btn svg { width: 15px; height: 15px; }
+    .btn-primary { background: var(--accent-on-dark); color: #0A0E14; }
+    .btn-primary:hover { background: #88aaff; transform: translateY(-2px); }
+    .btn-ghost { color: var(--on-dark); border: 1px solid var(--on-dark-line); }
+    .btn-ghost:hover { border-color: rgba(238,241,246,0.34); background: rgba(238,241,246,0.05); transform: translateY(-2px); }
+
+    /* ─────────────── HERO LAYOUT + ENGINE GRAPHIC ─────────────── */
+    .hero-main {
+      display: grid; grid-template-columns: minmax(0,1.05fr) minmax(0,0.95fr);
+      gap: 56px; align-items: center;
+    }
+    .hero-visual { display: flex; justify-content: center; }
+    .engine-svg { width: 100%; max-width: 400px; height: auto; display: block; }
+    .engine-svg .e-ring { fill: none; stroke: var(--on-dark-line); stroke-width: 1; }
+    .engine-svg .e-ring-dash  { stroke-dasharray: 2 9; }
+    .engine-svg .e-ring-dash2 { stroke-dasharray: 1 7; opacity: 0.7; }
+    .engine-svg .e-spoke line { stroke: var(--on-dark-line); stroke-width: 1; }
+    .engine-svg .e-node { fill: var(--ink-2); stroke: var(--on-dark-mut); stroke-width: 1.5; }
+    .engine-svg .e-node-accent { stroke: var(--accent-on-dark); fill: rgba(110,151,255,0.18); }
+    .engine-svg .e-label {
+      fill: var(--on-dark-mut); font-family: 'IBM Plex Mono','Noto Sans SC',sans-serif;
+      font-size: 10px; letter-spacing: 0.06em;
+    }
+    .engine-svg .e-core { fill: url(#coreGrad); stroke: rgba(110,151,255,0.35); stroke-width: 1.5; }
+    .engine-svg .e-glyph { fill: var(--accent-on-dark); }
+    .engine-svg .e-core-label {
+      fill: var(--on-dark-soft); font-family: 'IBM Plex Mono','Noto Sans SC',sans-serif;
+      font-size: 9px; letter-spacing: 0.12em;
+    }
+    .engine-svg .e-badge-bg { fill: var(--accent-on-dark); }
+    .engine-svg .e-badge-arrow { stroke: #0A0E14; stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+    .e-rot { transform-box: fill-box; transform-origin: center; animation: eSpin 64s linear infinite; }
+    .engine-svg .e-node-accent { animation: ePulse 3.2s ease-in-out infinite; }
+    .e-badge { animation: ePulse 3.2s ease-in-out infinite; }
+    @keyframes eSpin  { to { transform: rotate(360deg); } }
+    @keyframes ePulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+
+    /* ─────────────── PIPELINE MODULE ─────────────── */
+    .pipeline { margin-top: -34px; position: relative; z-index: 3; }
+    .pm-head {
+      display: flex; align-items: baseline; justify-content: space-between;
+      padding: 0 4px 12px;
+    }
+    .pm-label {
+      font-family: var(--mono); font-size: 11px; font-weight: 500;
+      letter-spacing: 0.16em; text-transform: uppercase; color: var(--text-soft);
+    }
+    .pm-meta { font-family: var(--mono); font-size: 11px; color: var(--text-mut); letter-spacing: 0.04em; }
+
+    .phases {
+      display: flex; flex-wrap: wrap; align-items: stretch;
+      border: 1px solid var(--line); border-radius: 14px; background: var(--surface);
+      box-shadow: 0 1px 2px rgba(16,21,27,0.04), 0 12px 32px rgba(16,21,27,0.06);
+    }
+    .phase {
+      flex: 1; min-width: 150px; padding: 18px 22px;
+      border-right: 1px solid var(--line); position: relative;
+    }
+    .phase:last-child { border-right: none; }
+    .phase:not(:last-child)::after {
+      content: '→'; position: absolute; right: -10px; top: 50%; transform: translateY(-50%);
+      width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;
+      background: var(--surface); border: 1px solid var(--line); border-radius: 50%;
+      font-family: var(--mono); font-size: 10px; color: var(--text-mut); z-index: 2;
+    }
+    .phase-n {
+      font-family: var(--mono); font-size: 11px; font-weight: 600;
+      color: var(--text-mut); letter-spacing: 0.06em;
+    }
+    .phase-name { font-size: 14px; font-weight: 600; color: var(--text); margin-top: 7px; }
+    .phase-sub { font-size: 11.5px; color: var(--text-soft); margin-top: 2px; }
+
+    /* ─────────────── BLOCKS ─────────────── */
+    .block { margin-top: 60px; }
+    .block-head { display: flex; align-items: baseline; gap: 16px; margin-bottom: 12px; }
+    .block-eyebrow {
+      font-family: var(--mono); font-size: 11px; font-weight: 600;
+      letter-spacing: 0.16em; text-transform: uppercase; flex-shrink: 0;
+    }
+    .e-cobalt { color: var(--accent); }
+    .e-teal   { color: var(--teal); }
+    .e-green  { color: var(--green); }
+    .block-title {
+      font-family: var(--display); font-size: 23px; font-weight: 700;
+      letter-spacing: -0.01em; color: var(--text); flex-shrink: 0;
+    }
+    .block-rule { flex: 1; height: 1px; background: var(--line-2); transform: translateY(-3px); }
+    .block-count { font-family: var(--mono); font-size: 11px; color: var(--text-mut); letter-spacing: 0.04em; flex-shrink: 0; }
+    .block-desc { font-size: 13.5px; color: var(--text-soft); line-height: 1.6; max-width: 660px; margin-bottom: 22px; }
+
+    .grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px;
+    }
+
+    .tool-card {
+      display: block; text-decoration: none;
+      background: var(--surface); border: 1px solid var(--line);
+      border-radius: 14px; padding: 24px 24px 22px;
+      position: relative; overflow: hidden;
+      transition: border-color 0.22s var(--ease), transform 0.32s var(--ease), box-shadow 0.22s var(--ease);
+    }
+    .tool-card::before {
+      content: ''; position: absolute; left: 0; right: 0; top: 0; height: 2px;
+      background: var(--accent); transform: scaleX(0); transform-origin: left;
+      transition: transform 0.32s var(--ease);
+    }
+    .tool-card:hover {
+      border-color: var(--line-2); transform: translateY(-3px);
+      box-shadow: 0 1px 2px rgba(16,21,27,0.04), 0 16px 36px rgba(16,21,27,0.09);
+    }
+    .tool-card:hover::before { transform: scaleX(1); }
+
+    .tc-ic {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 42px; height: 42px; border-radius: 11px;
+      background: #F1F3F6; color: var(--text); margin-bottom: 16px;
+      transition: background 0.22s var(--ease), color 0.22s var(--ease);
+    }
+    .tc-ic .ic {
+      width: 22px; height: 22px; display: block; background-color: currentColor;
+      -webkit-mask-repeat: no-repeat;
+      -webkit-mask-position: center;
+      -webkit-mask-size: contain;
+      mask-repeat: no-repeat;
+      mask-position: center;
+      mask-size: contain;
+    }
+    .tool-card:hover .tc-ic { background: rgba(20,82,240,0.1); color: var(--accent); }
+
+    .tc-tag {
+      font-family: var(--mono); font-size: 10.5px; font-weight: 500;
+      letter-spacing: 0.04em; color: var(--text-mut); margin-bottom: 9px;
+    }
+    .tc-title {
+      font-size: 17px; font-weight: 600; color: var(--text);
+      letter-spacing: -0.005em; margin-bottom: 8px; line-height: 1.35;
+    }
+    .tc-desc { font-size: 13px; color: var(--text-soft); line-height: 1.65; }
+    .tc-go {
+      position: absolute; top: 24px; right: 22px;
+      font-family: var(--mono); font-size: 15px; color: var(--text-mut);
+      opacity: 0; transform: translateX(-5px);
+      transition: opacity 0.22s var(--ease), transform 0.22s var(--ease), color 0.22s;
+    }
+    .tool-card:hover .tc-go { opacity: 1; transform: translateX(0); color: var(--accent); }
+
+    /* ─────────────── FOOTER ─────────────── */
+    .foot {
+      margin-top: 88px; padding: 28px 0 64px;
+      border-top: 1px solid var(--line);
+      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;
+    }
+    .foot span { font-family: var(--mono); font-size: 11px; color: var(--text-mut); letter-spacing: 0.03em; }
+    .foot a { font-family: var(--mono); font-size: 11px; color: var(--text-soft); text-decoration: none; transition: color 0.2s; }
+    .foot a:hover { color: var(--accent); }
+
+    /* ─────────────── MOTION ─────────────── */
+    @keyframes riseIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .ri { opacity: 0; animation: riseIn 0.7s var(--ease) forwards; }
+    .d1 { animation-delay: 0.05s; } .d2 { animation-delay: 0.13s; }
+    .d3 { animation-delay: 0.21s; } .d4 { animation-delay: 0.30s; }
+    .d5 { animation-delay: 0.40s; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .ri { animation: none !important; opacity: 1 !important; transform: none !important; }
+      html { scroll-behavior: auto; }
+    }
+
+    /* ─────────────── RESPONSIVE ─────────────── */
+    @media (max-width: 760px) {
+      .wrap, .hero-inner { padding-left: 22px; padding-right: 22px; }
+      .topbar { padding-bottom: 44px; }
+      .gh-link span.gh-text { display: none; }
+      .hero-main { grid-template-columns: 1fr; gap: 36px; }
+      .hero-visual { order: -1; }
+      .engine-svg { max-width: 260px; }
+      .phase { border-right: none; border-bottom: 1px solid var(--line); }
+      .phase:last-child { border-bottom: none; }
+      .phase:not(:last-child)::after { display: none; }
+      .grid { grid-template-columns: 1fr; }
+      .block-head { flex-wrap: wrap; }
     }
   </style>
 </head>
 <body>
-<a class="gh-link" href="https://github.com/jt-519/chromium" target="_blank" rel="noopener">
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.009-.868-.013-1.703-2.782.604-3.369-1.342-3.369-1.342-.454-1.155-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0 1 12 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.202 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.742 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
-  jt-519/chromium
-</a>
-<div class="page-wrap">
 
-  <header class="page-header">
-    <div class="page-eyebrow">Chromium Upgrade Toolkit</div>
-    <h1 class="page-title">升核<em>测试</em>工具集</h1>
-    <p class="page-subtitle">WebView 内核升级全流程工具：差异分析、基准跑分、API 兼容性回归、功能验证。覆盖 M124 → M141。</p>
-    <div class="hero-badges">
-      <span class="p-badge p-badge-accent">M124 → M141</span>
-      <span class="p-badge p-badge-teal">P1–P4 全流程</span>
-      <span class="p-badge p-badge-blue">10 个工具页面</span>
+  <header class="hero">
+    <div class="hero-inner">
+      <div class="topbar">
+        <span class="brandmark ri d1"><svg class="chromium-mark" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0C8.21 0 4.831 1.757 2.632 4.501l3.953 6.848A5.454 5.454 0 0 1 12 6.545h10.691A12 12 0 0 0 12 0zM1.931 5.47A11.943 11.943 0 0 0 0 12c0 6.012 4.42 10.991 10.189 11.864l3.953-6.847a5.45 5.45 0 0 1-6.865-2.29zm13.342 2.166a5.446 5.446 0 0 1 1.45 7.09l.002.001h-.002l-5.344 9.257c.206.01.413.016.621.016 6.627 0 12-5.373 12-12 0-1.54-.29-3.011-.818-4.364zM12 16.364a4.364 4.364 0 1 1 0-8.728 4.364 4.364 0 0 1 0 8.728Z"/></svg>Chromium Upgrade Program</span>
+        <a class="gh-link ri d1" href="https://github.com/jt-519/chromium" target="_blank" rel="noopener">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.009-.868-.013-1.703-2.782.604-3.369-1.342-3.369-1.342-.454-1.155-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0 1 12 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.202 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.742 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
+          <span class="gh-text">jt-519/chromium</span>
+        </a>
+      </div>
+
+      <div class="hero-main">
+        <div class="hero-copy">
+          <div class="eyebrow ri d2">WebView · Kernel Upgrade Toolkit</div>
+          <h1 class="hero-title ri d2">升核测试工具集</h1>
+          <p class="hero-lede ri d3">内核升级全流程的工程化工具台：差异分析、性能基准、API 兼容性回归与功能验证，支撑从评估到灰度的每一步决策。</p>
+
+          <div class="hero-actions ri d3">
+            <a class="btn btn-primary" href="pages/kernel_upgrade_diff.html">
+              开始差异分析
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg>
+            </a>
+            <a class="btn btn-ghost" href="pages/webview_test_plan.html">查看测试方案</a>
+          </div>
+        </div>
+
+        <div class="hero-visual ri d4">
+          <svg class="engine-svg" viewBox="0 0 380 380" role="img" aria-label="WebView 内核架构示意图：内核核心与渲染、V8、媒体、网络、GPU、存储模块">
+            <defs>
+              <radialGradient id="coreGrad" cx="50%" cy="42%" r="62%">
+                <stop offset="0%" stop-color="#1d2634"/>
+                <stop offset="100%" stop-color="#0b1018"/>
+              </radialGradient>
+              <radialGradient id="coreGlow" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="rgba(110,151,255,0.22)"/>
+                <stop offset="100%" stop-color="rgba(110,151,255,0)"/>
+              </radialGradient>
+            </defs>
+
+            <circle cx="190" cy="190" r="125" fill="url(#coreGlow)"/>
+
+            <g class="e-rot"><circle class="e-ring e-ring-dash" cx="190" cy="190" r="152"/></g>
+            <circle class="e-ring" cx="190" cy="190" r="130" opacity="0.45"/>
+            <circle class="e-ring e-ring-dash2" cx="190" cy="190" r="104"/>
+
+            <g class="e-spoke">
+              <line x1="190" y1="190" x2="190" y2="60"/>
+              <line x1="190" y1="190" x2="303" y2="125"/>
+              <line x1="190" y1="190" x2="303" y2="255"/>
+              <line x1="190" y1="190" x2="190" y2="320"/>
+              <line x1="190" y1="190" x2="77"  y2="255"/>
+              <line x1="190" y1="190" x2="77"  y2="125"/>
+            </g>
+
+            <circle class="e-node e-node-accent" cx="190" cy="60"  r="7"/>
+            <circle class="e-node e-node-accent" cx="303" cy="125" r="7"/>
+            <circle class="e-node" cx="303" cy="255" r="7"/>
+            <circle class="e-node" cx="190" cy="320" r="7"/>
+            <circle class="e-node" cx="77"  cy="255" r="7"/>
+            <circle class="e-node" cx="77"  cy="125" r="7"/>
+
+            <text class="e-label" x="190" y="42"  text-anchor="middle">渲染</text>
+            <text class="e-label" x="316" y="129" text-anchor="start">V8</text>
+            <text class="e-label" x="316" y="259" text-anchor="start">媒体</text>
+            <text class="e-label" x="190" y="344" text-anchor="middle">网络</text>
+            <text class="e-label" x="64"  y="259" text-anchor="end">GPU</text>
+            <text class="e-label" x="64"  y="129" text-anchor="end">存储</text>
+
+            <path class="e-core" d="M190 128 L244 159 L244 221 L190 252 L136 221 L136 159 Z"/>
+            <g transform="translate(173,165) scale(1.45)"><path class="e-glyph" d="M12 0C8.21 0 4.831 1.757 2.632 4.501l3.953 6.848A5.454 5.454 0 0 1 12 6.545h10.691A12 12 0 0 0 12 0zM1.931 5.47A11.943 11.943 0 0 0 0 12c0 6.012 4.42 10.991 10.189 11.864l3.953-6.847a5.45 5.45 0 0 1-6.865-2.29zm13.342 2.166a5.446 5.446 0 0 1 1.45 7.09l.002.001h-.002l-5.344 9.257c.206.01.413.016.621.016 6.627 0 12-5.373 12-12 0-1.54-.29-3.011-.818-4.364zM12 16.364a4.364 4.364 0 1 1 0-8.728 4.364 4.364 0 0 1 0 8.728Z"/></g>
+            <text class="e-core-label" x="190" y="234" text-anchor="middle">WEBVIEW 内核</text>
+
+            <g class="e-badge" transform="translate(229,121)">
+              <circle r="13" class="e-badge-bg"/>
+              <path class="e-badge-arrow" d="M0 5 L0 -5 M-4.5 -0.5 L0 -5 L4.5 -0.5"/>
+            </g>
+          </svg>
+        </div>
+      </div>
     </div>
   </header>
 
-  <div class="phase-flow">
-    <div class="phase-item"><b>P0</b>差异分析</div>
-    <span class="phase-arrow">→</span>
-    <div class="phase-item"><b>P1</b>基准跑分</div>
-    <span class="phase-arrow">→</span>
-    <div class="phase-item"><b>P2</b>兼容性验证</div>
-    <span class="phase-arrow">→</span>
-    <div class="phase-item"><b>P3</b>业务回归</div>
-    <span class="phase-arrow">→</span>
-    <div class="phase-item"><b>P4</b>稳定性 / 灰度</div>
-  </div>
+  <main class="wrap">
 
-  <div class="p-section">
-    <div class="p-section-title">基准测试</div>
-    <div class="p-divider"></div>
-    <div class="nav-grid">
-      <a class="nav-card c-accent" href="pages/webview_benchmarks.html">
-        <div class="nav-card-tag">P1 — benchmarks</div>
-        <div class="nav-card-title">基准工具集</div>
-        <div class="nav-card-desc">Speedometer 3.0 / JetStream 2 / MotionMark / WebGL Aquarium 性能基准入口</div>
-        <span class="nav-card-arrow">→</span>
-      </a>
-      <a class="nav-card c-accent" href="pages/webview_test_plan.html">
-        <div class="nav-card-tag">P1–P4 — plan</div>
-        <div class="nav-card-title">升核测试方案</div>
-        <div class="nav-card-desc">P1 性能基准 → P2 兼容性 → P3 业务回归 → P4 灰度，完整准出流程与量化标准</div>
-        <span class="nav-card-arrow">→</span>
-      </a>
-      <a class="nav-card c-accent" href="pages/webview_resources.html">
-        <div class="nav-card-tag">reference</div>
-        <div class="nav-card-title">WebView 资源参考</div>
-        <div class="nav-card-desc">升核相关官方文档、工具链、参考资源汇总</div>
-        <span class="nav-card-arrow">→</span>
-      </a>
+    <div class="pipeline ri d4">
+      <div class="pm-head">
+        <span class="pm-label">升核流程 · Upgrade Pipeline</span>
+        <span class="pm-meta">P0 → P4</span>
+      </div>
+      <div class="phases">
+        <div class="phase"><div class="phase-n">P0</div><div class="phase-name">差异分析</div><div class="phase-sub">Changelog 扫描</div></div>
+        <div class="phase"><div class="phase-n">P1</div><div class="phase-name">基准跑分</div><div class="phase-sub">性能对比</div></div>
+        <div class="phase"><div class="phase-n">P2</div><div class="phase-name">兼容性验证</div><div class="phase-sub">API 回归</div></div>
+        <div class="phase"><div class="phase-n">P3</div><div class="phase-name">业务回归</div><div class="phase-sub">场景覆盖</div></div>
+        <div class="phase"><div class="phase-n">P4</div><div class="phase-name">稳定性</div><div class="phase-sub">灰度发布</div></div>
+      </div>
     </div>
-  </div>
 
-  <div class="p-section">
-    <div class="p-section-title">内核分析</div>
-    <div class="p-divider"></div>
-    <div class="nav-grid">
-      <a class="nav-card c-teal" href="pages/kernel_test.html">
-        <div class="nav-card-tag">P2 — automation</div>
-        <div class="nav-card-title">Kernel Test Suite</div>
-        <div class="nav-card-desc">API 兼容性 + 性能回归自动化测试，支持 CDP 数据采集</div>
-        <span class="nav-card-arrow">→</span>
-      </a>
-      <a class="nav-card c-teal" href="pages/kernel_upgrade_diff.html">
-        <div class="nav-card-tag">P0 — diff</div>
-        <div class="nav-card-title">内核差异分析</div>
-        <div class="nav-card-desc">M124→M141 Breaking Changes / Security / WebView 差异速查</div>
-        <span class="nav-card-arrow">→</span>
-      </a>
-      <a class="nav-card c-teal" href="pages/kernel_changelog.html">
-        <div class="nav-card-tag">P0 — changelog</div>
-        <div class="nav-card-title">版本变更记录</div>
-        <div class="nav-card-desc">逐版本重大变更，按 high / medium / low 影响等级筛选，附官方来源</div>
-        <span class="nav-card-arrow">→</span>
-      </a>
-      <a class="nav-card c-teal" href="pages/kernel_test_help.html">
-        <div class="nav-card-tag">docs</div>
-        <div class="nav-card-title">测试帮助文档</div>
-        <div class="nav-card-desc">Kernel Test Suite 使用说明与测试项解读</div>
-        <span class="nav-card-arrow">→</span>
-      </a>
-    </div>
-  </div>
+    <section class="block">
+      <div class="block-head">
+        <span class="block-eyebrow e-cobalt">Benchmarks</span>
+        <h2 class="block-title">基准测试</h2>
+        <div class="block-rule"></div>
+        <span class="block-count">3 工具</span>
+      </div>
+      <p class="block-desc">性能基准与准出流程：量化每次内核变更对渲染、脚本与图形能力的影响。</p>
+      <div class="grid">
+        <a class="tool-card" href="pages/webview_benchmarks.html">
+          <span class="tc-ic"><i class="ic" style="-webkit-mask-image:url(assets/icons/gauge.svg);mask-image:url(assets/icons/gauge.svg)"></i></span>
+          <div class="tc-tag">P1 · benchmarks</div>
+          <div class="tc-title">基准工具集</div>
+          <div class="tc-desc">Speedometer 3.0 / JetStream 2 / MotionMark / WebGL Aquarium 性能基准入口</div>
+          <span class="tc-go">→</span>
+        </a>
+        <a class="tool-card" href="pages/webview_test_plan.html">
+          <span class="tc-ic"><i class="ic" style="-webkit-mask-image:url(assets/icons/clipboard.svg);mask-image:url(assets/icons/clipboard.svg)"></i></span>
+          <div class="tc-tag">P1–P4 · plan</div>
+          <div class="tc-title">升核测试方案</div>
+          <div class="tc-desc">P1 性能基准 → P2 兼容性 → P3 业务回归 → P4 灰度，完整准出流程与量化标准</div>
+          <span class="tc-go">→</span>
+        </a>
+        <a class="tool-card" href="pages/webview_resources.html">
+          <span class="tc-ic"><i class="ic" style="-webkit-mask-image:url(assets/icons/book.svg);mask-image:url(assets/icons/book.svg)"></i></span>
+          <div class="tc-tag">reference</div>
+          <div class="tc-title">WebView 资源参考</div>
+          <div class="tc-desc">升核相关官方文档、工具链、参考资源汇总</div>
+          <span class="tc-go">→</span>
+        </a>
+      </div>
+    </section>
 
-  <div class="p-section">
-    <div class="p-section-title">功能测试</div>
-    <div class="p-divider"></div>
-    <div class="nav-grid">
-      <a class="nav-card c-green" href="pages/mse_test.html">
-        <div class="nav-card-tag">media / extensions</div>
-        <div class="nav-card-title">MSE 测试</div>
-        <div class="nav-card-desc">Media Source Extensions 媒体源及浏览器扩展管理功能测试</div>
-        <span class="nav-card-arrow">→</span>
-      </a>
-      <a class="nav-card c-green" href="pages/chromium_test.html">
-        <div class="nav-card-tag">css features</div>
-        <div class="nav-card-title">CSS 特性测试</div>
-        <div class="nav-card-desc">Chromium 版本间 CSS 特性支持差异验证</div>
-        <span class="nav-card-arrow">→</span>
-      </a>
-      <a class="nav-card c-green" href="pages/nav_123.html">
-        <div class="nav-card-tag">navigation</div>
-        <div class="nav-card-title">导航行为测试</div>
-        <div class="nav-card-desc">WebView 导航跳转、历史栈、前进/后退行为验证</div>
-        <span class="nav-card-arrow">→</span>
-      </a>
-    </div>
-  </div>
+    <section class="block">
+      <div class="block-head">
+        <span class="block-eyebrow e-teal">Kernel</span>
+        <h2 class="block-title">内核分析</h2>
+        <div class="block-rule"></div>
+        <span class="block-count">4 工具</span>
+      </div>
+      <p class="block-desc">内核差异与回归分析：定位 Breaking Changes，追踪版本间 API 变更与风险。</p>
+      <div class="grid">
+        <a class="tool-card" href="pages/kernel_test.html">
+          <span class="tc-ic"><i class="ic" style="-webkit-mask-image:url(assets/icons/terminal.svg);mask-image:url(assets/icons/terminal.svg)"></i></span>
+          <div class="tc-tag">P2 · automation</div>
+          <div class="tc-title">内核自动化测试</div>
+          <div class="tc-desc">自动化脚本驱动的内核回归测试，快速定位兼容性问题</div>
+          <span class="tc-go">→</span>
+        </a>
+        <a class="tool-card" href="pages/kernel_upgrade_diff.html">
+          <span class="tc-ic"><i class="ic" style="-webkit-mask-image:url(assets/icons/diff.svg);mask-image:url(assets/icons/diff.svg)"></i></span>
+          <div class="tc-tag">P0 · diff</div>
+          <div class="tc-title">内核升级差异分析</div>
+          <div class="tc-desc">Breaking Changes 扫描、API 变更追踪、风险评估</div>
+          <span class="tc-go">→</span>
+        </a>
+        <a class="tool-card" href="pages/kernel_changelog.html">
+          <span class="tc-ic"><i class="ic" style="-webkit-mask-image:url(assets/icons/changelog.svg);mask-image:url(assets/icons/changelog.svg)"></i></span>
+          <div class="tc-tag">reference · changelog</div>
+          <div class="tc-title">内核 Changelog</div>
+          <div class="tc-desc">M124 → M141 各版本关键变更记录与风险标注</div>
+          <span class="tc-go">→</span>
+        </a>
+        <a class="tool-card" href="pages/kernel_test_help.html">
+          <span class="tc-ic"><i class="ic" style="-webkit-mask-image:url(assets/icons/help.svg);mask-image:url(assets/icons/help.svg)"></i></span>
+          <div class="tc-tag">docs · help</div>
+          <div class="tc-title">测试指引文档</div>
+          <div class="tc-desc">升核测试操作规范、工具使用说明与 FAQ</div>
+          <span class="tc-go">→</span>
+        </a>
+      </div>
+    </section>
 
-</div>
+    <section class="block">
+      <div class="block-head">
+        <span class="block-eyebrow e-green">Tests</span>
+        <h2 class="block-title">功能测试</h2>
+        <div class="block-rule"></div>
+        <span class="block-count">3 工具</span>
+      </div>
+      <p class="block-desc">核心功能与媒体能力验证：覆盖渲染、网络、JS 引擎与音视频播放链路。</p>
+      <div class="grid">
+        <a class="tool-card" href="pages/chromium_test.html">
+          <span class="tc-ic"><i class="ic" style="-webkit-mask-image:url(assets/icons/grid.svg);mask-image:url(assets/icons/grid.svg)"></i></span>
+          <div class="tc-tag">P3 · regression</div>
+          <div class="tc-title">Chromium 功能测试</div>
+          <div class="tc-desc">渲染、网络、JS 引擎、存储等核心功能回归验证</div>
+          <span class="tc-go">→</span>
+        </a>
+        <a class="tool-card" href="pages/mse_test.html">
+          <span class="tc-ic"><i class="ic" style="-webkit-mask-image:url(assets/icons/media.svg);mask-image:url(assets/icons/media.svg)"></i></span>
+          <div class="tc-tag">P3 · media</div>
+          <div class="tc-title">MSE 媒体测试</div>
+          <div class="tc-desc">Media Source Extensions 兼容性与播放稳定性测试</div>
+          <span class="tc-go">→</span>
+        </a>
+        <a class="tool-card" href="pages/nav_123.html">
+          <span class="tc-ic"><i class="ic" style="-webkit-mask-image:url(assets/icons/compass.svg);mask-image:url(assets/icons/compass.svg)"></i></span>
+          <div class="tc-tag">utility</div>
+          <div class="tc-title">导航工具</div>
+          <div class="tc-desc">快速跳转工具集与辅助导航页面</div>
+          <span class="tc-go">→</span>
+        </a>
+      </div>
+    </section>
+
+    <footer class="foot">
+      <span>Chromium Upgrade Toolkit · 10 tools</span>
+      <a href="https://github.com/jt-519/chromium" target="_blank" rel="noopener">github.com/jt-519/chromium ↗</a>
+    </footer>
+
+  </main>
+
 </body>
 </html>
