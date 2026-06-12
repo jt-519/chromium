@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://jt-519.github.io/chromium/sitemap.xml
